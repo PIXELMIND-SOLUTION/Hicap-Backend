@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const aboutRoutes = require("./routes/AboutUSRoute");
-
+const enquiryRoutes = require('./routes/EnquiryRoutes');
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
@@ -29,7 +29,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // ✅ Routes
 app.use("/api", aboutRoutes);
-
+app.use('/api/enquiries', enquiryRoutes);
 
 
 // Socket.IO connection
