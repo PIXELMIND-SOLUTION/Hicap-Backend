@@ -5,6 +5,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const aboutRoutes = require("./routes/AboutUSRoute");
 const enquiryRoutes = require('./routes/EnquiryRoutes');
+const contentRoutes = require("./routes/contentRoutes");
+const path = require("path");
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
@@ -30,7 +32,7 @@ mongoose.connect(process.env.MONGO_URI)
 // ✅ Routes
 app.use("/api", aboutRoutes);
 app.use('/api/enquiries', enquiryRoutes);
-
+app.use("/api/content", contentRoutes);
 
 // Socket.IO connection
 io.on('connection', (socket) => {
