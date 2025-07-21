@@ -34,7 +34,7 @@ mongoose.connect(process.env.MONGO_URI)
 // ✅ Routes
 app.use("/api", aboutRoutes);
 app.use('/api/enquiries', enquiryRoutes);
-app.use("/api/content", contentRoutes);
+app.use("/api", contentRoutes);
 
 // Socket.IO connection
 io.on('connection', (socket) => {

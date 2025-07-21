@@ -1,33 +1,55 @@
 const Content = require("../models/content");
 const cloudinary = require("../config/cloudinary");
+const { uploadImage } = require("../utils/uploadImage");
 
-// POST: Create
+// POST: Create Content
 const createContent = async (req, res) => {
   try {
     const { title, heading, description } = req.body;
 
-    if (!req.file) return res.status(400).json({ message: "Image is required" });
+    if (!title || !heading || !description) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-    const imageUrl = req.file.path;
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ message: "Image is required" });
+    }
+
+    const imageUrl = await uploadImage(req.file.buffer);
 
     const content = await Content.create({ title, heading, description, image: imageUrl });
+
     res.status(201).json({ message: "Content created", data: content });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-// GET: All
+// GET: All Content
 const getAllContent = async (req, res) => {
   try {
-    const data = await Content.find().sort({ _id: -1 });
-    res.status(200).json({ message: "Content fetched", data });
+    const contents = await Content.find().sort({ _id: -1 });
+    res.status(200).json({ message: "All content fetched", data: contents });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-// PUT: Update
+// GET: Content by ID
+const getContentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const content = await Content.findById(id);
+
+    if (!content) return res.status(404).json({ message: "Content not found" });
+
+    res.status(200).json({ message: "Content found", data: content });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// PUT: Update Content
 const updateContent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -35,21 +57,22 @@ const updateContent = async (req, res) => {
 
     const updateData = { title, heading, description };
 
-    if (req.file) {
-      updateData.image = req.file.path;
+    if (req.file && req.file.buffer) {
+      const imageUrl = await uploadImage(req.file.buffer);
+      updateData.image = imageUrl;
     }
 
     const updated = await Content.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!updated) return res.status(404).json({ message: "Content not found" });
 
-    res.json({ message: "Content updated", data: updated });
+    res.status(200).json({ message: "Content updated", data: updated });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-// DELETE: Remove
+// DELETE: Remove Content
 const deleteContent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -58,7 +81,7 @@ const deleteContent = async (req, res) => {
 
     if (!deleted) return res.status(404).json({ message: "Content not found" });
 
-    res.json({ message: "Content deleted"});
+    res.status(200).json({ message: "Content deleted" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -67,6 +90,7 @@ const deleteContent = async (req, res) => {
 module.exports = {
   createContent,
   getAllContent,
+  getContentById,
   updateContent,
   deleteContent
 };
