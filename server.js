@@ -19,7 +19,9 @@ app.set('io', io);
 
 app.use(cors());
 app.use(express.json());
-
+app.get("/", (req, res) => {
+  res.send("API is live!");
+});
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
