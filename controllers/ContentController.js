@@ -58,7 +58,7 @@ const deleteContent = async (req, res) => {
 
     if (!deleted) return res.status(404).json({ message: "Content not found" });
 
-    res.json({ message: "Content deleted" });
+    res.json({ message: "Content deleted"});
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
