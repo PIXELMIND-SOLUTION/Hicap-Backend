@@ -6,6 +6,10 @@ const dotenv = require('dotenv');
 const aboutRoutes = require("./routes/AboutUSRoute");
 const enquiryRoutes = require('./routes/EnquiryRoutes');
 const contentRoutes = require("./routes/contentRoutes");
+const homeRoutes = require('./routes/homeRoute');
+
+
+
 const path = require("path");
 dotenv.config();
 const app = express();
@@ -31,10 +35,16 @@ mongoose.connect(process.env.MONGO_URI)
     console.log('Mongo Error:', err)}
 );
 
+
+
 // ✅ Routes
 app.use("/api", aboutRoutes);
 app.use('/api/enquiries', enquiryRoutes);
 app.use("/api", contentRoutes);
+app.use('/api', homeRoutes);
+
+
+
 
 // Socket.IO connection
 io.on('connection', (socket) => {

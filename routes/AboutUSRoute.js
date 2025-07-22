@@ -20,6 +20,8 @@ const {
   deleteClassRoom
 } = require("../controllers/AboutUsController");
 
+const clientController = require("../controllers/clientController");
+
 // ==============================
 // 🔹 ABOUT ROUTES
 // ==============================
@@ -65,5 +67,25 @@ router.post('/classRoom', upload.array('image3'), createClassRoom);
 router.get('/classRoom', getAllClassRoom);
 router.put('/classRoom/:id', upload.array('image3'), updateClassRoom);
 router.delete('/classRoom/:id', deleteClassRoom);
+
+
+
+
+// client Routes
+// POST: Create client
+router.post("/client", upload.array("image", 10), clientController.createClient);
+
+// GET: All clients
+router.get("/client", clientController.getAllClients);
+
+// GET: Single client by ID
+router.get("/client/:id", clientController.getClientById);
+
+// PUT: Update client
+router.put("/client/:id", upload.array("image", 10), clientController.updateClient);
+
+// DELETE: Delete client
+router.delete("/client/:id", clientController.deleteClient);
+
 
 module.exports = router;

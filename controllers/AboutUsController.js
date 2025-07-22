@@ -1,6 +1,5 @@
 const { AboutUs, AboutPage,TechnicalTeam,ClassRoom } = require("../models/AboutUsModel"); 
-const cloudinary = require("../config/cloudinary");
-const { uploadImage } = require('../utils/uploadImage');
+const { cloudinary, uploadImage } = require('../config/cloudinary');
 
 // ✅ Create About (POST)
 const createAbout = async (req, res) => {

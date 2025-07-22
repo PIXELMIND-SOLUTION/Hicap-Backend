@@ -1,6 +1,5 @@
 const Content = require("../models/content");
-const cloudinary = require("../config/cloudinary");
-const { uploadImage } = require("../utils/uploadImage");
+const { cloudinary, uploadImage } = require('../config/cloudinary');
 
 // POST: Create Content
 const createContent = async (req, res) => {
