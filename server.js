@@ -8,6 +8,7 @@ const enquiryRoutes = require('./routes/EnquiryRoutes');
 const contentRoutes = require("./routes/contentRoutes");
 const homeRoutes = require('./routes/homeRoute');
 const homeFeatureRoutes = require('./routes/homeFeatureRoutes');
+const mentorRoutes = require("./routes/ourMentorRoute");
 
 
 
@@ -44,6 +45,7 @@ app.use('/api/enquiries', enquiryRoutes);
 app.use("/api", contentRoutes);
 app.use('/api', homeRoutes);
 app.use("/api/home-features", homeFeatureRoutes);
+app.use("/api/our-mentor", mentorRoutes);
 
 
 
