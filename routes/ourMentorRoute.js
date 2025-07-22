@@ -7,11 +7,11 @@ const upload = multer({ storage });
 const mentorController = require("../controllers/ourMentorsController");
 
 // 🔥 EXPERIENCE ROUTES - define FIRST to avoid :id conflicts
-router.post("/Experience", upload.single("image"), mentorController.createMentorExperience);
-router.get("/Experience", mentorController.getAllMentorExperiences);
-router.get("/Experience/:id", mentorController.getMentorExperienceById);
-router.put("/Experience/:id", upload.single("image"), mentorController.updateMentorExperience);
-router.delete("/Experience/:id", mentorController.deleteMentorExperience);
+router.post("/experience", upload.single("image"), mentorController.createMentorExperience);
+router.get("/experience", mentorController.getAllMentorExperiences);
+router.get("/experience/:id", mentorController.getMentorExperienceById);
+router.put("/experience/:id", upload.single("image"), mentorController.updateMentorExperience);
+router.delete("/experience/:id", mentorController.deleteMentorExperience);
 
 // 🔧 OUR MENTOR ROUTES - define AFTER specific routes
 router.post("/", upload.single("image"), mentorController.createMentor);
