@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Home Schema
 const homeSchema = new mongoose.Schema({
@@ -9,7 +9,7 @@ const homeSchema = new mongoose.Schema({
   image: {
     type: String,
     required: true,
-  }
+  },
 });
 
 // HomeCourses Schema
@@ -29,10 +29,28 @@ const homeCoursesSchema = new mongoose.Schema({
   image: {
     type: String,
     required: true,
-  }
+  },
 });
 
-const Home = mongoose.model('Home', homeSchema);
-const HomeCourses = mongoose.model('HomeCourses', homeCoursesSchema);
+// ✅ Review Schema (renamed from Rating)
+const reviewSchema = new mongoose.Schema(
+  {
+    image: { type: String },
+    name: { type: String, required: true },
+    rating: { type: Number, required: true },
+    content: { type: String },
+  },
+  { timestamps: true }
+);
 
-module.exports = { Home, HomeCourses};
+// Define models
+const Home = mongoose.model("Home", homeSchema);
+const HomeCourses = mongoose.model("HomeCourses", homeCoursesSchema);
+const Review = mongoose.model("Review", reviewSchema);
+
+// Export all
+module.exports = {
+  Home,
+  HomeCourses,
+  Review,
+};

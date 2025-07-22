@@ -21,4 +21,11 @@ router.put('/Courses/:id', upload.single('image'), homeController.updateHomeCour
 router.delete('/Courses/:id', homeController.deleteHomeCourses);
 
 
+
+router.post("/review", upload.single("image"), homeController.createReview);
+router.get("/review", homeController.getAllReviews);
+router.get("/review/:id", homeController.getReviewById);
+router.put("/review/:id", upload.single("image"), homeController.updateReview);
+router.delete("/review/:id", homeController.deleteReview);
+
 module.exports = router;

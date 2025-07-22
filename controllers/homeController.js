@@ -1,4 +1,4 @@
-const { Home, HomeCourses } = require("../models/homeModel");
+const { Home, HomeCourses, Review } = require("../models/homeModel");
 const { uploadImage } = require('../config/cloudinary');
 // Create Home
 exports.createHome = async (req, res) => {
@@ -141,3 +141,87 @@ exports.deleteHomeCourses = async (req, res) => {
   }
 };
 
+// CREATE
+exports.createReview = async (req, res) => {
+  try {
+    const { name, rating, content } = req.body;
+    let imageUrl = "";
+
+    if (req.file) {
+      imageUrl = await uploadImage(req.file.buffer);
+    }
+
+    const newReview = await Review.create({
+      image: imageUrl,
+      name,
+      rating,
+      content,
+    });
+
+    res.status(201).json({ message: "Review created", data: newReview });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+// GET ALL
+exports.getAllReviews = async (req, res) => {
+  try {
+    const Reviews = await Review.find().sort({ createdAt: -1 });
+    res.status(200).json({ message: "All Reviews", data: Reviews });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+// GET BY ID
+exports.getReviewById = async (req, res) => {
+  try {
+    const Reviews = await Review.findById(req.params.id);
+    if (!Reviews) return res.status(404).json({ message: "Review not found" });
+    res.status(200).json({ message: "Review found", data: Review });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+// UPDATE
+exports.updateReview = async (req, res) => {
+  try {
+    const { name, rating, content } = req.body;
+    const ratingData = await Review.findById(req.params.id);
+    if (!ratingData) return res.status(404).json({ message: "Review not found" });
+
+    let imageUrl = ratingData.image;
+    if (req.file) {
+      imageUrl = await uploadImage(req.file.buffer);
+    }
+
+    const updated = await Review.findByIdAndUpdate(
+      req.params.id,
+      {
+        image: imageUrl,
+        name,
+        rating,
+        content,
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Review updated", data: updated });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+// DELETE
+exports.deleteReview = async (req, res) => {
+  try {
+    const deleted = await Review.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Review not found" });
+
+    res.status(200).json({ message: "Review deleted", data: deleted });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
