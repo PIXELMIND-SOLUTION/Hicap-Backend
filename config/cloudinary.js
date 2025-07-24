@@ -26,7 +26,7 @@ const uploadImage = (fileBuffer) => {
     streamifier.createReadStream(fileBuffer).pipe(stream);
   });
 };
-// Upload image from file path (used for static files)
+
 const uploadToCloudinary = async (filePath, folderName = "uploads") => {
   try {
     const result = await cloudinary.uploader.upload(filePath, {

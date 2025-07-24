@@ -10,7 +10,7 @@ const homeRoutes = require('./routes/homeRoute');
 const homeFeatureRoutes = require('./routes/homeFeatureRoutes');
 const mentorRoutes = require("./routes/ourMentorRoute");
 const faqRoutes = require("./routes/faqRoutes");
-
+const courseRoutes = require("./routes/courseRoutes");
 
 
 const path = require("path");
@@ -48,6 +48,9 @@ app.use('/api', homeRoutes);
 app.use("/api/home-features", homeFeatureRoutes);
 app.use("/api/our-mentor", mentorRoutes);
 app.use("/api", faqRoutes);
+app.use("/api/course1", courseRoutes);
+
+
 
 
 
