@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../utils/uploadMiddleware'); // multer middleware
-
 const homeController = require("../controllers/homeController");
-
 
 
 router.post("/home", upload.single("image"), homeController.createHome);
@@ -27,5 +25,6 @@ router.get("/review", homeController.getAllReviews);
 router.get("/review/:id", homeController.getReviewById);
 router.put("/review/:id", upload.single("image"), homeController.updateReview);
 router.delete("/review/:id", homeController.deleteReview);
+
 
 module.exports = router;

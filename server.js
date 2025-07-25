@@ -11,7 +11,7 @@ const homeFeatureRoutes = require('./routes/homeFeatureRoutes');
 const mentorRoutes = require("./routes/ourMentorRoute");
 const faqRoutes = require("./routes/faqRoutes");
 const courseRoutes = require("./routes/courseRoutes");
-
+const user = require('./routes/registerUserRoute');
 
 const path = require("path");
 dotenv.config();
@@ -26,10 +26,6 @@ app.set('io', io);
 
 app.use(cors());
 app.use(express.json());
-app.get("/", (req, res) => {
-  res.send("API is live!");
-});
-
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB Connected')
@@ -49,7 +45,7 @@ app.use("/api/home-features", homeFeatureRoutes);
 app.use("/api/our-mentor", mentorRoutes);
 app.use("/api", faqRoutes);
 app.use("/api/course1", courseRoutes);
-
+app.use('/api', user);
 
 
 
