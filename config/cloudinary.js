@@ -13,7 +13,7 @@ cloudinary.config({
 const uploadImage = (fileBuffer) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "uploads" },
+      { folder: "uploads" }, // Changed from "courses"
       (error, result) => {
         if (error) {
           reject(error);
@@ -27,7 +27,7 @@ const uploadImage = (fileBuffer) => {
   });
 };
 
-const uploadToCloudinary = async (filePath, folderName = "uploads") => {
+const uploadToCloudinary = async (filePath, folderName = "uploads") => { // Changed default folder
   try {
     const result = await cloudinary.uploader.upload(filePath, {
       folder: folderName,
