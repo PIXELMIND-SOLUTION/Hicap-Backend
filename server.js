@@ -44,7 +44,7 @@ app.use('/api', homeRoutes);
 app.use("/api/home-features", homeFeatureRoutes);
 app.use("/api/our-mentor", mentorRoutes);
 app.use("/api", faqRoutes);
-app.use("/api/course1", courseRoutes);
+app.use("/api", courseRoutes);
 app.use('/api', user);
 
 

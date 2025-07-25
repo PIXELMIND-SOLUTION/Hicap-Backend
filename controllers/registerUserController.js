@@ -81,7 +81,7 @@ exports.login = async (req, res) => {
 // READ - Get All Users
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await userRegister.find().select('-password');
+    const users = await userRegister.find();
     res.status(200).json({ success: true, data: users });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
