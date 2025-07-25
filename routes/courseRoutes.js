@@ -8,22 +8,9 @@ router.post(
   processFiles,
   courseController.createCourse
 );
-
-// // Get All Courses
-// router.get('/', courseController.getAllCourses);
-
-// // Get Single Course
-// router.get('/:id', courseController.getCourseById);
-
-// // Update Course
-// router.put(
-//   '/:id',
-//   upload.any(),
-//   processFormData,
-//   courseController.updateCourse
-// );
-
-// // Delete Course
-// router.delete('/:id', courseController.deleteCourse);
+router.get('/', courseController.getAllCourses);
+router.get('/:id', courseController.getCourseById);
+router.put('/:id', processFiles, courseController.updateCourse);
+router.delete('/:id', courseController.deleteCourse);
 
 module.exports = router;

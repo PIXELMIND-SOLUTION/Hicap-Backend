@@ -101,3 +101,189 @@ exports.createCourse = async (req, res) => {
     });
   }
 };
+
+
+
+// GET ALL COURSES
+exports.getAllCourses = async (req, res) => {
+  try {
+    const courses = await Course.find().sort('-createdAt');
+    res.status(200).json({
+      success: true,
+      count: courses.length,
+      data: courses
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// GET SINGLE COURSE BY ID
+exports.getCourseById = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found"
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: course
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+
+exports.updateCourse = async (req, res) => {
+  try {
+    // 1. Prepare updates object
+    const courseId = req.params.id;
+    const requestBody = req.body;
+    const requestFiles = req.files;
+    const courseUpdates = { ...requestBody };
+
+    // 2. Handle main image update
+    if (requestFiles?.image?.[0]) {
+      const mainImageFile = requestFiles.image[0];
+      const mainImagePath = mainImageFile.path;
+      
+      if (fs.existsSync(mainImagePath)) {
+        try {
+          const mainImageUrl = await uploadToCloudinary(mainImagePath, "uploads");
+          courseUpdates.image = mainImageUrl;
+        } catch (uploadError) {
+          console.error('Main image upload failed:', uploadError);
+          throw new Error('Failed to upload main course image');
+        } finally {
+          fs.unlinkSync(mainImagePath);
+        }
+      }
+    }
+
+    // 3. Process feature images
+    if (requestBody.features && Array.isArray(requestBody.features)) {
+      const updatedFeatures = await Promise.all(
+        requestBody.features.map(async (featureData, featureIndex) => {
+          const featureImageKey = `features[${featureIndex}][image]`;
+          
+          // Check for new feature image upload
+          if (requestFiles[featureImageKey]?.[0]) {
+            const featureImageFile = requestFiles[featureImageKey][0];
+            const featureImagePath = featureImageFile.path;
+            
+            if (fs.existsSync(featureImagePath)) {
+              try {
+                const featureImageUrl = await uploadToCloudinary(featureImagePath, "uploads/features");
+                featureData.image = featureImageUrl;
+              } catch (featureUploadError) {
+                console.error(`Feature ${featureIndex} image upload failed:`, featureUploadError);
+                throw new Error(`Failed to upload feature image ${featureIndex}`);
+              } finally {
+                fs.unlinkSync(featureImagePath);
+              }
+            }
+          }
+          
+          // Preserve existing image if no new upload
+          if (!featureData.image) {
+            const existingCourseData = await Course.findById(courseId);
+            if (existingCourseData?.features?.[featureIndex]?.image) {
+              featureData.image = existingCourseData.features[featureIndex].image;
+            }
+          }
+          
+          return featureData;
+        })
+      );
+      
+      courseUpdates.features = updatedFeatures;
+    }
+
+    // 4. Update course in database
+    const updatedCourseDocument = await Course.findByIdAndUpdate(
+      courseId,
+      courseUpdates,
+      { 
+        new: true,
+        runValidators: true,
+        context: 'query'
+      }
+    );
+
+    // 5. Handle course not found
+    if (!updatedCourseDocument) {
+      return res.status(404).json({
+        success: false,
+        message: "No course found with the provided ID",
+        courseId: courseId
+      });
+    }
+
+    // 6. Send success response
+    res.status(200).json({
+      success: true,
+      message: "Course updated successfully",
+      updatedCourse: updatedCourseDocument
+    });
+
+  } catch (error) {
+    // 7. Error handling and cleanup
+    if (req.files) {
+      Object.values(req.files).flat().forEach(fileObject => {
+        try {
+          if (fileObject?.path && fs.existsSync(fileObject.path)) {
+            fs.unlinkSync(fileObject.path);
+          }
+        } catch (fileCleanupError) {
+          console.error('Error cleaning up file:', fileCleanupError);
+        }
+      });
+    }
+
+    // 8. Determine appropriate status code
+    const errorStatusCode = error.name === 'ValidationError' ? 400 : 500;
+    const errorResponseMessage = error.name === 'ValidationError' 
+      ? error.message 
+      : 'An error occurred while updating the course';
+
+    res.status(errorStatusCode).json({
+      success: false,
+      error: error.name,
+      message: errorResponseMessage,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+// DELETE COURSE
+exports.deleteCourse = async (req, res) => {
+  try {
+    const course = await Course.findByIdAndDelete(req.params.id);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found"
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Course deleted successfully",
+      data: course
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
