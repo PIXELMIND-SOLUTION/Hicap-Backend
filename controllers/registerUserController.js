@@ -77,3 +77,55 @@ exports.login = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+// READ - Get All Users
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await userRegister.find().select('-password');
+    res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// READ - Get User by ID
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await userRegister.findById(req.params.id).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// UPDATE - Update User
+exports.updateUser = async (req, res) => {
+  try {
+    const { firstName, lastName, email, phoneNumber } = req.body;
+
+    const user = await userRegister.findByIdAndUpdate(
+      req.params.id,
+      { firstName, lastName, email, phoneNumber },
+      { new: true }
+    ).select('-password');
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    res.status(200).json({ success: true, message: 'User updated successfully', data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// DELETE - Remove User
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await userRegister.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    res.status(200).json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
