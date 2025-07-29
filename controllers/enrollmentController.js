@@ -112,7 +112,8 @@ exports.createCertificate = async (req, res) => {
       user,
       course,
       status: {
-        image: imageUrl || null
+        image: imageUrl || null,
+        type: "Pending" // Optional: default handled by schema
       }
     });
 
@@ -125,18 +126,22 @@ exports.createCertificate = async (req, res) => {
 // ✅ Get all certificates
 exports.getAllCertificates = async (req, res) => {
   try {
-    const certificates = await Certificate.find().populate('user').populate('course');
+    const certificates = await Certificate.find()
+      
     res.status(200).json({ success: true, data: certificates });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
-// 📖 Get certificate(s) by userId
+// ✅ Get certificate by userId
 exports.getCertificateByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    const certificate = await Certificate.findOne({ user: userId }).populate('user').populate('course');
+
+    const certificate = await Certificate.findOne({ user: userId })
+      .populate("user")
+      .populate("course");
 
     if (!certificate) {
       return res.status(404).json({ success: false, message: "Certificate not found for this user" });
@@ -148,7 +153,7 @@ exports.getCertificateByUserId = async (req, res) => {
   }
 };
 
-// ✏️ Update certificate by userId
+// ✅ Update certificate by userId
 exports.updateCertificateByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -156,15 +161,19 @@ exports.updateCertificateByUserId = async (req, res) => {
 
     const updateData = {};
     if (status) {
-      updateData["status.status"] = status;
+      updateData["status.type"] = status; // Update status type like "completed"
     }
 
     if (req.file) {
       const imageUrl = await uploadImage(req.file.buffer);
-      updateData["status.image"] = imageUrl;
+      updateData["status.image"] = imageUrl; // Replace old image with new one
     }
 
-    const updated = await Certificate.findOneAndUpdate({ user: userId }, { $set: updateData }, { new: true });
+    const updated = await Certificate.findOneAndUpdate(
+      { user: userId },
+      { $set: updateData },
+      { new: true }
+    );
 
     if (!updated) {
       return res.status(404).json({ success: false, message: "Certificate not found for this user" });
@@ -176,10 +185,11 @@ exports.updateCertificateByUserId = async (req, res) => {
   }
 };
 
-// ❌ Delete certificate by userId
+// ✅ Delete certificate by userId
 exports.deleteCertificateByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
+
     const deleted = await Certificate.findOneAndDelete({ user: userId });
 
     if (!deleted) {
