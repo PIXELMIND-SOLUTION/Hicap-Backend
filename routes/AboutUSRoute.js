@@ -12,6 +12,7 @@ const {
   deleteLeadership,
   createTechnicalTeam,
   getAllTechnicalTeam,
+  getTechnicalTeamById,
   updateTechnicalTeam,
   deleteTechnicalTeam,
   createClassRoom, 
@@ -60,7 +61,8 @@ router.delete('/leadership/:id', deleteLeadership);
 
 router.post("/technical-team", upload.single("image2"), createTechnicalTeam);
 router.get("/technical-team", getAllTechnicalTeam);
-router.put("/technical-team/:id", upload.single("image2"), updateTechnicalTeam);
+router.get('/technical-team/:id', getTechnicalTeamById);
+router.put("/technical-team/:id", upload.single("image2"), updateTechnicalTeam );
 router.delete("/technical-team/:id", deleteTechnicalTeam);
 
 router.post('/classRoom', upload.array('image3'), createClassRoom);

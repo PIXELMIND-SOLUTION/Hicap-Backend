@@ -247,25 +247,47 @@ const updateTechnicalTeam = async (req, res) => {
     const { id } = req.params;
     const { title2, description2 } = req.body;
 
+    // Validate required fields
+    if (!title2 || !description2) {
+      return res.status(400).json({
+        success: false,
+        message: "title2 and description2 are required",
+      });
+    }
+
     const updateData = { title2, description2 };
 
+    // ✅ Handle image upload if file is present
     if (req.file) {
-      const imageUrl = await uploadImage(req.file.buffer);
+      console.log("Image received in req.file:", req.file.originalname);
+      const imageUrl = await uploadImage(req.file.buffer); // Upload image and get URL
       updateData.image2 = imageUrl;
     }
 
+    // ✅ Update member by ID
     const updatedMember = await TechnicalTeam.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!updatedMember) {
-      return res.status(404).json({ success: false, message: "Member not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Technical team member not found",
+      });
     }
 
-    res.status(200).json({ success: true, message: "Updated successfully", data: updatedMember });
+    res.status(200).json({
+      success: true,
+      message: "Technical team member updated successfully",
+      data: updatedMember,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Update error", error: error.message });
+    console.error("Update Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message || error,
+    });
   }
 };
-
 // ✅ Delete Technical Team Member by ID (DELETE)
 const deleteTechnicalTeam = async (req, res) => {
   try {
@@ -386,6 +408,7 @@ module.exports = {
   deleteLeadership,
   createTechnicalTeam,
   getAllTechnicalTeam,
+  getTechnicalTeamById,
   updateTechnicalTeam,
   deleteTechnicalTeam,
   createClassRoom, 
