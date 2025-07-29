@@ -12,6 +12,7 @@ const mentorRoutes = require("./routes/ourMentorRoute");
 const faqRoutes = require("./routes/faqRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const user = require('./routes/registerUserRoute');
+const details =require('./routes/detailsRoute');  
 
 const path = require("path");
 dotenv.config();
@@ -46,6 +47,7 @@ app.use("/api/our-mentor", mentorRoutes);
 app.use("/api", faqRoutes);
 app.use("/api", courseRoutes);
 app.use('/api', user);
+app.use('/api',details);
 
 
 

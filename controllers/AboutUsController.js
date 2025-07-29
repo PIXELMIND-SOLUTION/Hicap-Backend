@@ -196,71 +196,73 @@ const deleteLeadership = async (req, res) => {
 const createTechnicalTeam = async (req, res) => {
   try {
     const { title2, description2 } = req.body;
-    let imageUrl = '';
+    let imageUrl = "";
 
     if (req.file) {
       imageUrl = await uploadImage(req.file.buffer);
     }
 
-    const member = new TechnicalTeam({
+    const newMember = await TechnicalTeam.create({
       title2,
       description2,
-      image2: imageUrl,
+      image2: imageUrl
     });
 
-    await member.save();
-
-    res.status(201).json({ message: 'Technical Team member created', data: member });
+    res.status(201).json({ success: true, message: "Member created", data: newMember });
   } catch (error) {
-    console.error('Create Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message || error });
+    console.error("Create Error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
 // ✅ Get All Technical Team Members (GET)
-const getTechnicalTeam = async (req, res) => {
+const getAllTechnicalTeam = async (req, res) => {
   try {
     const members = await TechnicalTeam.find().sort({ createdAt: -1 });
-    res.status(200).json({ message: "Fetched successfully", data: members });
+    res.status(200).json({ success: true, data: members });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// ✅ Get Technical Team Member by ID (GET)
+const getTechnicalTeamById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const member = await TechnicalTeam.findById(id);
+
+    if (!member) {
+      return res.status(404).json({ success: false, message: "Member not found" });
+    }
+
+    res.status(200).json({ success: true, data: member });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
 // ✅ Update Technical Team Member by ID (PUT)
 const updateTechnicalTeam = async (req, res) => {
   try {
-    const { title2, description2 } = req.body;
     const { id } = req.params;
+    const { title2, description2 } = req.body;
 
     const updateData = { title2, description2 };
 
-    // Check if image is uploaded
     if (req.file) {
-      const result = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { resource_type: "image", folder: "technicalTeam" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        req.file.stream.pipe(uploadStream); // Pipe file stream into Cloudinary
-      });
-
-      updateData.image2 = result.secure_url;
+      const imageUrl = await uploadImage(req.file.buffer);
+      updateData.image2 = imageUrl;
     }
 
-    // Update document in DB
-    const updated = await TechnicalTeam.findByIdAndUpdate(id, updateData, { new: true });
+    const updatedMember = await TechnicalTeam.findByIdAndUpdate(id, updateData, { new: true });
 
-    if (!updated) {
-      return res.status(404).json({ message: "Technical Team not found" });
+    if (!updatedMember) {
+      return res.status(404).json({ success: false, message: "Member not found" });
     }
 
-    res.status(200).json({ message: "Updated successfully", data: updated });
+    res.status(200).json({ success: true, message: "Updated successfully", data: updatedMember });
   } catch (error) {
-    res.status(500).json({ message: "Update error", error: error.message || error });
+    res.status(500).json({ success: false, message: "Update error", error: error.message });
   }
 };
 
@@ -272,12 +274,12 @@ const deleteTechnicalTeam = async (req, res) => {
     const deleted = await TechnicalTeam.findByIdAndDelete(id);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Member not found" });
+      return res.status(404).json({ success: false, message: "Member not found" });
     }
 
-    res.status(200).json({ message: "Deleted successfully", data: deleted });
+    res.status(200).json({ success: true, message: "Deleted successfully", data: deleted });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
@@ -383,7 +385,7 @@ module.exports = {
   updateLeadership,
   deleteLeadership,
   createTechnicalTeam,
-  getTechnicalTeam,
+  getAllTechnicalTeam,
   updateTechnicalTeam,
   deleteTechnicalTeam,
   createClassRoom, 

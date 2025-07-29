@@ -1,4 +1,4 @@
-const HomeFeature = require("../models/HomeFeature");
+const {HomeFeature,Quality} = require("../models/HomeFeature");
 const { uploadImage } = require('../config/cloudinary');
 
 const createHomeFeature = async (req, res) => {
@@ -99,10 +99,133 @@ const deleteHomeFeature = async (req, res) => {
   }
 };
 
+// ➕ Create Quality Icons
+const createQualityIcons = async (req, res) => {
+  try {
+    const file = req.file;
+    const iconLogos = req.body.iconLogos;
+    const names = req.body.names;
+
+    const iconLogoArray = Array.isArray(iconLogos) ? iconLogos : [iconLogos];
+    const nameArray = Array.isArray(names) ? names : [names];
+
+    if (!file || iconLogoArray.length === 0 || nameArray.length === 0) {
+      return res.status(400).json({ success: false, message: "Image, iconLogos and names are required." });
+    }
+
+    if (iconLogoArray.length !== nameArray.length) {
+      return res.status(400).json({ success: false, message: "iconLogos and names length mismatch." });
+    }
+
+    // Upload image to Cloudinary
+    const imageUrl = await uploadImage(file.buffer);
+
+    // Build icons array
+    const icons = iconLogoArray.map((logo, index) => ({
+      iconLogo: logo,
+      name: nameArray[index],
+    }));
+
+    const newQuality = await Quality.create({
+      image: imageUrl,
+      icon: icons
+    });
+
+    res.status(201).json({ success: true, message: "Quality created", data: newQuality });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// ✅ GET ALL
+const getAllQualityIcons = async (req, res) => {
+  try {
+    const qualities = await Quality.find();
+    res.status(200).json({ success: true, data: qualities });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// ✅ GET BY ID
+const getQualityIconById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const quality = await Quality.findById(id);
+    if (!quality) {
+      return res.status(404).json({ success: false, message: "Quality not found" });
+    }
+    res.status(200).json({ success: true, data: quality });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// ✅ UPDATE
+const updateQualityIcon = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const file = req.file;
+    const iconLogos = req.body.iconLogos;
+    const names = req.body.names;
+
+    const iconLogoArray = Array.isArray(iconLogos) ? iconLogos : [iconLogos];
+    const nameArray = Array.isArray(names) ? names : [names];
+
+    if (iconLogoArray.length !== nameArray.length) {
+      return res.status(400).json({ success: false, message: "iconLogos and names length mismatch." });
+    }
+
+    let updateData = {};
+
+    if (file) {
+      const imageUrl = await uploadImage(file.buffer);
+      updateData.image = imageUrl;
+    }
+
+    if (iconLogoArray.length > 0) {
+      updateData.icon = iconLogoArray.map((logo, index) => ({
+        iconLogo: logo,
+        name: nameArray[index],
+      }));
+    }
+
+    const updated = await Quality.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Quality not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Quality updated", data: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// ✅ DELETE
+const deleteQualityIcon = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Quality.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Quality not found" });
+    }
+    res.status(200).json({ success: true, message: "Quality deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   createHomeFeature,
   getAllHomeFeatures,
   getHomeFeatureById,
   updateHomeFeature,
   deleteHomeFeature,
+  createQualityIcons,
+  getAllQualityIcons,
+  getQualityIconById,
+  updateQualityIcon,
+  deleteQualityIcon
+  
 };

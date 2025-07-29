@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// ✅ Feature Schema
 const featureSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -15,6 +16,7 @@ const featureSchema = new mongoose.Schema({
   }
 });
 
+// ✅ Home Feature Schema
 const homeFeatureSchema = new mongoose.Schema({
   description: {
     type: String,
@@ -23,4 +25,18 @@ const homeFeatureSchema = new mongoose.Schema({
   features: [featureSchema]
 }, { timestamps: true });
 
-module.exports = mongoose.model("HomeFeature", homeFeatureSchema);
+// ✅ Quality Schema
+const qualitySchema = new mongoose.Schema({
+  image: { type: String }, // Single image string, or rename if using multiple
+  icon: [{                 // Array of icon objects
+    iconLogo: { type: String },
+    name: { type: String }
+  }]
+}, { timestamps: true });
+
+// ✅ Create Models
+const Quality = mongoose.model('Quality', qualitySchema);
+const HomeFeature = mongoose.model('HomeFeature', homeFeatureSchema);
+
+// ✅ Export both
+module.exports = { Quality, HomeFeature };
