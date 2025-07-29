@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
 const contactDetailsSchema = new mongoose.Schema({
+  logoimage:{
+     type:String
+  },
   title: { type: String, required: true },
   branch: { type: String, required: true },
   address: { type: String, required: true },

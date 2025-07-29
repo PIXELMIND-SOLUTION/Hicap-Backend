@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Enrollment Schema
 const enrollmentSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -18,4 +19,36 @@ const enrollmentSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Enrollment', enrollmentSchema);
+// Certificate Schema
+const certificateSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'userRegister',
+    required: true
+  },
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+    required: true
+  },
+  status: {
+    status: {
+    image: { type: String },
+    type: {
+      type: String,
+      enum: ['Pending', 'completed'],
+      default: 'Pending'
+    }
+  }
+  }
+}, { timestamps: true });
+
+// Create models
+const Enrollment = mongoose.model('Enrollment', enrollmentSchema);
+const Certificate = mongoose.model('Certificate', certificateSchema);
+
+// Export models
+module.exports = {
+  Enrollment,
+  Certificate
+};
