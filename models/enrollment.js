@@ -26,21 +26,20 @@ const certificateSchema = new mongoose.Schema({
     ref: "userRegister",
     required: true
   },
-  course: {
+  enrollment: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Course",
+    ref: "Enrollment",
     required: true
   },
   status: {
     image: { type: String },
     type: {
       type: String,
-      enum: ["Pending", "completed"],
+      enum: ["Pending", "Completed"],
       default: "Pending"
     }
   }
 });
-
 // Create models
 const Enrollment = mongoose.model('Enrollment', enrollmentSchema);
 const Certificate = mongoose.model('Certificate', certificateSchema);

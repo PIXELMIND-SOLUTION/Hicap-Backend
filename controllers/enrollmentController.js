@@ -1,5 +1,6 @@
 const {Enrollment,Certificate} = require('../models/enrollment');
 const { uploadImage } = require('../config/cloudinary');
+const mongoose = require('mongoose');
 
 
 
@@ -94,79 +95,81 @@ exports.deleteEnrollmentByUserId = async (req, res) => {
 };
 
 
-// ✅ Create Certificate with image upload
+
+// @desc    Create a certificate
+// @route   POST /api/certificates
+// ✅ Create Certificate
 exports.createCertificate = async (req, res) => {
   try {
-    const { user, course } = req.body;
+    const { userId, enrollmentId, type } = req.body;
 
-    if (!user || !course) {
-      return res.status(400).json({ success: false, message: "User and Course are required." });
+    if (!userId || !enrollmentId || !type) {
+      return res.status(400).json({ success: false, message: "userId, enrollmentId and type are required" });
     }
 
     let imageUrl = null;
     if (req.file) {
-      imageUrl = await uploadImage(req.file.buffer); // Upload to Cloudinary
+      imageUrl = await uploadImage(req.file.buffer);
     }
 
-    const newCertificate = await Certificate.create({
-      user,
-      course,
+    const certificate = new Certificate({
+      user: userId,
+      enrollment: enrollmentId,
       status: {
-        image: imageUrl || null,
-        type: "Pending" // Optional: default handled by schema
+        image: imageUrl,
+        type: type,
       }
     });
 
-    res.status(201).json({ success: true, message: "Certificate created", data: newCertificate });
+    const savedCertificate = await certificate.save();
+
+    res.status(201).json({ success: true, message: "Certificate created", data: savedCertificate });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
-// ✅ Get all certificates
+// ✅ Get All Certificates
 exports.getAllCertificates = async (req, res) => {
   try {
-    const certificates = await Certificate.find()
-      
+    const certificates = await Certificate.find().populate("user enrollment");
     res.status(200).json({ success: true, data: certificates });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
-// ✅ Get certificate by userId
+// ✅ Get Certificate by UserId
 exports.getCertificateByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-
-    const certificate = await Certificate.findOne({ user: userId })
-      .populate("user")
-      .populate("course");
+    const certificate = await Certificate.findOne({ user: userId }).populate("user enrollment");
 
     if (!certificate) {
-      return res.status(404).json({ success: false, message: "Certificate not found for this user" });
+      return res.status(404).json({ success: false, message: "Certificate not found" });
     }
 
     res.status(200).json({ success: true, data: certificate });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
-// ✅ Update certificate by userId
+// ✅ Update Certificate by UserId
 exports.updateCertificateByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { status } = req.body;
+    const { type } = req.body;
 
-    const updateData = {};
-    if (status) {
-      updateData["status.type"] = status; // Update status type like "completed"
+    let updateData = {};
+    if (type) {
+      updateData["status.type"] = type;
     }
 
     if (req.file) {
       const imageUrl = await uploadImage(req.file.buffer);
-      updateData["status.image"] = imageUrl; // Replace old image with new one
+      updateData["status.image"] = imageUrl;
     }
 
     const updated = await Certificate.findOneAndUpdate(
@@ -176,16 +179,17 @@ exports.updateCertificateByUserId = async (req, res) => {
     );
 
     if (!updated) {
-      return res.status(404).json({ success: false, message: "Certificate not found for this user" });
+      return res.status(404).json({ success: false, message: "Certificate not found" });
     }
 
     res.status(200).json({ success: true, message: "Certificate updated", data: updated });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
-// ✅ Delete certificate by userId
+// ✅ Delete Certificate by UserId
 exports.deleteCertificateByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -193,11 +197,31 @@ exports.deleteCertificateByUserId = async (req, res) => {
     const deleted = await Certificate.findOneAndDelete({ user: userId });
 
     if (!deleted) {
-      return res.status(404).json({ success: false, message: "Certificate not found for this user" });
+      return res.status(404).json({ success: false, message: "Certificate not found" });
     }
 
     res.status(200).json({ success: true, message: "Certificate deleted", data: deleted });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+
+// ✅ Delete Certificate by ID
+exports.deleteCertificateById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("Deleting Certificate ID:", id); // 🔍 Debug log
+
+    const deleted = await Certificate.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Certificate not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Certificate deleted successfully", data: deleted });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };

@@ -31,9 +31,24 @@ router.get("/Certificates", Controller.getAllCertificates);
 // 📖 Get Certificate by ID
 router.get("/Certificate/:userId", Controller.getCertificateByUserId);
 
-// ✏️ Update Certificate by ID (status/image)
-router.put("/Certificate/:userId", upload.single("image"), Controller.updateCertificateByUserId);
 
-// ❌ Delete Certificate by ID
-router.delete("/Certificate/:userId", Controller.deleteCertificateByUserId);
+
+
+// Update user's specific certificate
+router.put(
+  "/Certificate/:userId", upload.single("image"),
+  Controller.updateCertificateByUserId
+);
+
+
+// Delete user's specific certificate
+router.delete(
+  "/Certificate/:userId",
+  Controller.deleteCertificateByUserId
+);
+
+// DELETE: Delete certificate by Certificate ID
+router.delete("/Certificate/deleteById/:id", Controller.deleteCertificateById);
+
+
 module.exports = router;
