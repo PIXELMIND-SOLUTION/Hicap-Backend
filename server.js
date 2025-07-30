@@ -13,6 +13,8 @@ const faqRoutes = require("./routes/faqRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const user = require('./routes/registerUserRoute');
 const details =require('./routes/detailsRoute');  
+const interviewRoutes = require("./routes/interviewRoute");
+
 
 const path = require("path");
 dotenv.config();
@@ -48,6 +50,8 @@ app.use("/api", faqRoutes);
 app.use("/api", courseRoutes);
 app.use('/api', user);
 app.use('/api',details);
+app.use("/api", interviewRoutes);
+
 
 
 
