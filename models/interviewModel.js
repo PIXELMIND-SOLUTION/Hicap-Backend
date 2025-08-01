@@ -32,6 +32,9 @@ const interviewSchema = new mongoose.Schema(
     },
     content: {
       type: String
+    },
+    link:{
+      type:String
     }
   },
   { timestamps: true }
