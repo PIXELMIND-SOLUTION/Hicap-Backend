@@ -41,7 +41,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // ✅ Routes
 app.use("/api", aboutRoutes);
-app.use('/api/enquiries', enquiryRoutes);
+app.use('/api', enquiryRoutes);
 app.use("/api", contentRoutes);
 app.use('/api', homeRoutes);
 app.use("/api/home-features", homeFeatureRoutes);

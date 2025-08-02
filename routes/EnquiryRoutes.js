@@ -12,25 +12,25 @@ const {
 const doubtSessionController = require("../controllers/doubtSessionController");
 
 
-router.post('/create', createEnquiry);
-router.get('/all', getEnquiries);
-router.get('/:id', getEnquiryById);
-router.put('/:id', updateEnquiry);
-router.delete('/:id', deleteEnquiry);
+router.post('/Enquiry', createEnquiry);
+router.get('/Enquiry', getEnquiries);
+router.get('/Enquiry/:id', getEnquiryById);
+router.put('/Enquiry/:id', updateEnquiry);
+router.delete('/Enquiry/:id', deleteEnquiry);
 
 // ➕ Create doubt session
-router.post("/", upload.single("image"), doubtSessionController.createDoubtSession);
+router.post("/doubtSession", upload.single("image"), doubtSessionController.createDoubtSession);
 
 // 📖 Get all doubt sessions
-router.get("/", doubtSessionController.getAllDoubtSessions);
+router.get("/doubtSession", doubtSessionController.getAllDoubtSessions);
 
 // 📖 Get a single doubt session by ID
-router.get("/:id", doubtSessionController.getDoubtSessionById);
+router.get("/doubtSession/:id", doubtSessionController.getDoubtSessionById);
 
 // ✏️ Update doubt session
-router.put("/:id", upload.single("image"), doubtSessionController.updateDoubtSession);
+router.put("/doubtSession/:id", upload.single("image"), doubtSessionController.updateDoubtSession);
 
 // ❌ Delete doubt session
-router.delete("/:id", doubtSessionController.deleteDoubtSession);
+router.delete("/doubtSession/:id", doubtSessionController.deleteDoubtSession);
 
 module.exports = router;

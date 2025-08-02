@@ -14,10 +14,10 @@ router.put("/experience/:id", upload.single("image"), mentorController.updateMen
 router.delete("/experience/:id", mentorController.deleteMentorExperience);
 
 // 🔧 OUR MENTOR ROUTES - define AFTER specific routes
-router.post("/", upload.single("image"), mentorController.createMentor);
-router.get("/", mentorController.getAllMentors);
-router.get("/:id", mentorController.getMentorById);
-router.put("/:id", upload.single("image"), mentorController.updateMentor);
-router.delete("/:id", mentorController.deleteMentor);
+router.post("Mentor/", upload.single("image"), mentorController.createMentor);
+router.get("/Mentor", mentorController.getAllMentors);
+router.get("/Mentor/:id", mentorController.getMentorById);
+router.put("/Mentor/:id", upload.single("image"), mentorController.updateMentor);
+router.delete("/Mentor/:id", mentorController.deleteMentor);
 
 module.exports = router;
