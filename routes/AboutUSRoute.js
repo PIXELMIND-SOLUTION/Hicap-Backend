@@ -20,7 +20,7 @@ const {
   updateClassRoom, 
   deleteClassRoom
 } = require("../controllers/AboutUsController");
-
+const upcomingBatchController = require("../controllers/upcomingBatchController");
 const clientController = require("../controllers/clientController");
 
 // ==============================
@@ -88,6 +88,15 @@ router.put("/client/:id", upload.array("image", 10), clientController.updateClie
 
 // DELETE: Delete client
 router.delete("/client/:id", clientController.deleteClient);
+
+router.post("/upcomingBatch", upcomingBatchController.createUpcomingBatch);
+router.get("/upcomingBatch", upcomingBatchController.getAllUpcomingBatches);
+router.get("/upcomingBatch/categorie/:categorie", upcomingBatchController.getBatchesByCategorie);
+router.get("/upcomingBatch/:batchId", upcomingBatchController.getSingleBatchByIdOnly);
+
+router.get("/upcomingBatch/:id", upcomingBatchController.getUpcomingBatchById);
+router.put("/upcomingBatch/:id", upcomingBatchController.updateUpcomingBatch);
+router.delete("/upcomingBatch/:id", upcomingBatchController.deleteUpcomingBatch);
 
 
 module.exports = router;
