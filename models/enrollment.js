@@ -16,7 +16,37 @@ const enrollmentSchema = new mongoose.Schema({
     type: String,
     enum: ['enrolled', 'completed'],
     default: 'enrolled'
+  },
+rank: {
+  type: Number,
+  default: () => null
+},
+  performance: {
+  theoreticalPercentage: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
+  },
+  practicalPercentage: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
+  },
+  feedback: {
+    type: String,
+    default: ''
+  },
+  grade: {
+    type: String,
+    enum: ['A', 'B', 'C', 'D', 'F', ''],
+    default: ''
+  },
+  completedAt: {
+    type: Date
   }
+}
 }, { timestamps: true });
 
 // Certificate Schema

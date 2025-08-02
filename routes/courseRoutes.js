@@ -18,9 +18,12 @@ router.delete('/course1/:id', courseController.deleteCourse);
 
 router.post('/enrollments', Controller.createEnrollment);
 router.get('/enrollments', Controller.getAllEnrollments);
-router.get('/enrollments/:userId', Controller.getEnrollmentsByUserId);
-router.put('/enrollments/:userId', Controller.updateEnrollmentByUserId);
-router.delete('/enrollments/:userId', Controller.deleteEnrollmentByUserId);
+router.get('/enrollments/top-practical/:courseId', Controller.getTopPracticalPerformersInCourse);
+router.get('/enrollments/:courseId/users', Controller.getUsersEnrolledInCourse);
+router.get('/enrollments/:userId', Controller.getEnrolledCoursesByUser);
+
+router.put('/enrollments/:userId/:courseId', Controller.updateEnrolledByUserId);
+router.delete('/enrollments/:userId/:courseId', Controller.deleteEnrollmentByUserIdAndCourseId);
 
 // ➕ Create Certificate with image upload
 router.post("/Certificate", upload.single("image"), Controller.createCertificate);

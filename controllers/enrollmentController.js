@@ -7,28 +7,64 @@ const mongoose = require('mongoose');
 // ➕ Create new enrollment
 exports.createEnrollment = async (req, res) => {
   try {
-    const { user, course, status } = req.body;
+    const { user, course, status, performance } = req.body;
 
+    // Required validation
     if (!user || !course) {
-      return res.status(400).json({ success: false, message: 'User and Course are required' });
+      return res.status(400).json({
+        success: false,
+        message: 'User and Course are required'
+      });
     }
 
+    // Check if enrollment already exists
     const alreadyExists = await Enrollment.findOne({ user, course });
     if (alreadyExists) {
-      return res.status(400).json({ success: false, message: 'User already enrolled in this course' });
+      return res.status(400).json({
+        success: false,
+        message: 'User already enrolled in this course'
+      });
     }
 
-    const newEnrollment = await Enrollment.create({ user, course, status });
-    res.status(201).json({ success: true, data: newEnrollment });
+    const enrollmentData = {
+      user,
+      course,
+      status: status || 'enrolled'
+    };
+
+    // Handle performance object if present
+    if (performance && typeof performance === 'object') {
+      enrollmentData.performance = {
+        theoreticalPercentage: performance.theoreticalPercentage || 0,
+        practicalPercentage: performance.practicalPercentage || 0,
+        feedback: performance.feedback || '',
+        grade: performance.grade || '',
+        completedAt: performance.completedAt || null
+      };
+    }
+
+    const newEnrollment = await Enrollment.create(enrollmentData);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Enrollment created successfully',
+      data: newEnrollment
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
 
 // 📖 Get all enrollments
 exports.getAllEnrollments = async (req, res) => {
   try {
-    const enrollments = await Enrollment.find().populate('user').populate('course');
+    const enrollments = await Enrollment.find()
+      .populate('user')
+      .populate('course');
     res.status(200).json({ success: true, data: enrollments });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
@@ -36,63 +72,231 @@ exports.getAllEnrollments = async (req, res) => {
 };
 
 // 📖 Get a single enrollment by ID
-exports.getEnrollmentsByUserId = async (req, res) => {
+exports.getEnrolledCoursesByUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const enrollments = await Enrollment.find({ user: userId })
-      .populate('user')
-      .populate('course');
 
-    if (enrollments.length === 0) {
-      return res.status(404).json({ success: false, message: 'No enrollments found for this user' });
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required in the URL'
+      });
     }
 
-    res.status(200).json({ success: true, data: enrollments });
+    // Find enrollments and populate course only
+    const enrollments = await Enrollment.find({ user: userId }).populate('course');
+
+    if (!enrollments || enrollments.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No enrolled courses found for this user'
+      });
+    }
+
+    // Extract course data only
+    const enrolledCourses = enrollments.map((enroll) => enroll.course);
+
+    res.status(200).json({
+      success: true,
+      data: enrolledCourses
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
+// 📊 Get top performers by practicalPercentage in a specific course
+exports.getTopPracticalPerformersInCourse = async (req, res) => {
+   try {
+    const { courseId } = req.params;
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Course ID is required in the URL",
+      });
+    }
+
+    // 1. Fetch all enrollments for the course and populate user
+    let enrollments = await Enrollment.find({ course: courseId }).populate("user");
+
+    if (!enrollments || enrollments.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No users enrolled in this course",
+      });
+    }
+
+    // 2. Custom sort: primary -> practical, secondary -> theoretical
+    enrollments.sort((a, b) => {
+      if (
+        b.performance.practicalPercentage === a.performance.practicalPercentage
+      ) {
+        return b.performance.theoreticalPercentage - a.performance.theoreticalPercentage;
+      }
+      return b.performance.practicalPercentage - a.performance.practicalPercentage;
+    });
+
+    // 3. Assign ranks and save
+    for (let i = 0; i < enrollments.length; i++) {
+      enrollments[i].rank = i + 1;
+      await enrollments[i].save();
+    }
+
+    res.status(200).json({
+      success: true,
+      count: enrollments.length,
+      message: "Ranks assigned based on practicalPercentage and tiebreaker theoreticalPercentage",
+      data: enrollments,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
 
 
 // ✏️ Update enrollment status
-exports.updateEnrollmentByUserId = async (req, res) => {
+exports.updateEnrolledByUserId = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const { status } = req.body;
+    const { userId, courseId } = req.params;
+    const { status, performance } = req.body;
 
-    const updated = await Enrollment.findOneAndUpdate(
-      { user: userId },
-      { status },
-      { new: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ success: false, message: 'Enrollment not found for this user' });
+    if (!userId || !courseId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both userId and courseId are required in params'
+      });
     }
 
-    res.status(200).json({ success: true, data: updated });
+    const existingEnrollment = await Enrollment.findOne({ user: userId, course: courseId });
+
+    if (!existingEnrollment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Enrollment not found for this user and course'
+      });
+    }
+
+    // Update status if provided
+    if (status) {
+      existingEnrollment.status = status;
+    }
+
+    // Update performance fields if provided
+    if (performance && typeof performance === 'object') {
+      existingEnrollment.performance = {
+        ...existingEnrollment.performance._doc, // keep existing values
+        theoreticalPercentage: performance.theoreticalPercentage ?? existingEnrollment.performance.theoreticalPercentage,
+        practicalPercentage: performance.practicalPercentage ?? existingEnrollment.performance.practicalPercentage,
+        feedback: performance.feedback ?? existingEnrollment.performance.feedback,
+        grade: performance.grade ?? existingEnrollment.performance.grade,
+        completedAt: performance.completedAt ?? existingEnrollment.performance.completedAt
+      };
+    }
+
+    const updatedEnrollment = await existingEnrollment.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Enrollment updated successfully',
+      data: updatedEnrollment
+    });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
+
+
+// 📋 Get all users enrolled in a specific course
+exports.getUsersEnrolledInCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Course ID is required in the URL',
+      });
+    }
+
+    const enrollments = await Enrollment.find({ course: courseId }).populate('user');
+
+    if (!enrollments || enrollments.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No users enrolled in this course',
+      });
+    }
+
+    // Extract only user details
+    const enrolledUsers = enrollments.map((enroll) => enroll.user);
+
+    res.status(200).json({
+      success: true,
+      count: enrolledUsers.length,
+      data: enrolledUsers,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
 
 
 // ❌ Delete enrollment
-exports.deleteEnrollmentByUserId = async (req, res) => {
+exports.deleteEnrollmentByUserIdAndCourseId = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId, courseId } = req.params;
 
-    const deleted = await Enrollment.deleteMany({ user: userId });
-
-    if (deleted.deletedCount === 0) {
-      return res.status(404).json({ success: false, message: 'No enrollments found to delete for this user' });
+    if (!userId || !courseId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both userId and courseId are required in the URL'
+      });
     }
 
-    res.status(200).json({ success: true, message: 'Enrollment(s) deleted successfully' });
+    const deletedEnrollment = await Enrollment.findOneAndDelete({ user: userId, course: courseId });
+
+    if (!deletedEnrollment) {
+      return res.status(404).json({
+        success: false,
+        message: 'No enrollment found for this user and course'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Enrollment deleted successfully',
+      data: deletedEnrollment
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
+
 
 
 
