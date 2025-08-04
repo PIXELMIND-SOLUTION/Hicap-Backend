@@ -28,6 +28,10 @@ rank: {
     max: 100,
     default: 0
   },
+  courseTopic:{
+    type:String,
+    default:''
+  },
   practicalPercentage: {
     type: Number,
     min: 0,

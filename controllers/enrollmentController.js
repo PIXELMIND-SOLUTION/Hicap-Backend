@@ -3,13 +3,11 @@ const { uploadImage } = require('../config/cloudinary');
 const mongoose = require('mongoose');
 
 
-
 // ➕ Create new enrollment
 exports.createEnrollment = async (req, res) => {
   try {
     const { user, course, status, performance } = req.body;
 
-    // Required validation
     if (!user || !course) {
       return res.status(400).json({
         success: false,
@@ -17,7 +15,6 @@ exports.createEnrollment = async (req, res) => {
       });
     }
 
-    // Check if enrollment already exists
     const alreadyExists = await Enrollment.findOne({ user, course });
     if (alreadyExists) {
       return res.status(400).json({
@@ -32,14 +29,14 @@ exports.createEnrollment = async (req, res) => {
       status: status || 'enrolled'
     };
 
-    // Handle performance object if present
     if (performance && typeof performance === 'object') {
       enrollmentData.performance = {
         theoreticalPercentage: performance.theoreticalPercentage || 0,
         practicalPercentage: performance.practicalPercentage || 0,
         feedback: performance.feedback || '',
         grade: performance.grade || '',
-        completedAt: performance.completedAt || null
+        completedAt: performance.completedAt || null,
+        courseTopic: performance.courseTopic || ''
       };
     }
 
@@ -62,16 +59,14 @@ exports.createEnrollment = async (req, res) => {
 // 📖 Get all enrollments
 exports.getAllEnrollments = async (req, res) => {
   try {
-    const enrollments = await Enrollment.find()
-      .populate('user')
-      .populate('course');
+    const enrollments = await Enrollment.find().populate('user').populate('course');
     res.status(200).json({ success: true, data: enrollments });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// 📖 Get a single enrollment by ID
+// 📖 Get enrolled courses by user
 exports.getEnrolledCoursesByUser = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -79,22 +74,20 @@ exports.getEnrolledCoursesByUser = async (req, res) => {
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: 'User ID is required in the URL'
+        message: 'User ID is required'
       });
     }
 
-    // Find enrollments and populate course only
     const enrollments = await Enrollment.find({ user: userId }).populate('course');
 
     if (!enrollments || enrollments.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'No enrolled courses found for this user'
+        message: 'No enrolled courses found'
       });
     }
 
-    // Extract course data only
-    const enrolledCourses = enrollments.map((enroll) => enroll.course);
+    const enrolledCourses = enrollments.map((e) => e.course);
 
     res.status(200).json({
       success: true,
@@ -108,39 +101,29 @@ exports.getEnrolledCoursesByUser = async (req, res) => {
     });
   }
 };
-// 📊 Get top performers by practicalPercentage in a specific course
+
+// 📊 Get top performers by practicalPercentage in a course
 exports.getTopPracticalPerformersInCourse = async (req, res) => {
-   try {
+  try {
     const { courseId } = req.params;
 
     if (!courseId) {
-      return res.status(400).json({
-        success: false,
-        message: "Course ID is required in the URL",
-      });
+      return res.status(400).json({ success: false, message: "Course ID is required" });
     }
 
-    // 1. Fetch all enrollments for the course and populate user
     let enrollments = await Enrollment.find({ course: courseId }).populate("user");
 
     if (!enrollments || enrollments.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No users enrolled in this course",
-      });
+      return res.status(404).json({ success: false, message: "No users enrolled" });
     }
 
-    // 2. Custom sort: primary -> practical, secondary -> theoretical
     enrollments.sort((a, b) => {
-      if (
-        b.performance.practicalPercentage === a.performance.practicalPercentage
-      ) {
+      if (b.performance.practicalPercentage === a.performance.practicalPercentage) {
         return b.performance.theoreticalPercentage - a.performance.theoreticalPercentage;
       }
       return b.performance.practicalPercentage - a.performance.practicalPercentage;
     });
 
-    // 3. Assign ranks and save
     for (let i = 0; i < enrollments.length; i++) {
       enrollments[i].rank = i + 1;
       await enrollments[i].save();
@@ -149,22 +132,15 @@ exports.getTopPracticalPerformersInCourse = async (req, res) => {
     res.status(200).json({
       success: true,
       count: enrollments.length,
-      message: "Ranks assigned based on practicalPercentage and tiebreaker theoreticalPercentage",
+      message: "Ranks assigned",
       data: enrollments,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
-
-
-
-// ✏️ Update enrollment status
+// ✏️ Update enrollment
 exports.updateEnrolledByUserId = async (req, res) => {
   try {
     const { userId, courseId } = req.params;
@@ -173,7 +149,7 @@ exports.updateEnrolledByUserId = async (req, res) => {
     if (!userId || !courseId) {
       return res.status(400).json({
         success: false,
-        message: 'Both userId and courseId are required in params'
+        message: 'Both userId and courseId are required'
       });
     }
 
@@ -182,24 +158,23 @@ exports.updateEnrolledByUserId = async (req, res) => {
     if (!existingEnrollment) {
       return res.status(404).json({
         success: false,
-        message: 'Enrollment not found for this user and course'
+        message: 'Enrollment not found'
       });
     }
 
-    // Update status if provided
     if (status) {
       existingEnrollment.status = status;
     }
 
-    // Update performance fields if provided
     if (performance && typeof performance === 'object') {
       existingEnrollment.performance = {
-        ...existingEnrollment.performance._doc, // keep existing values
+        ...existingEnrollment.performance._doc,
         theoreticalPercentage: performance.theoreticalPercentage ?? existingEnrollment.performance.theoreticalPercentage,
         practicalPercentage: performance.practicalPercentage ?? existingEnrollment.performance.practicalPercentage,
         feedback: performance.feedback ?? existingEnrollment.performance.feedback,
         grade: performance.grade ?? existingEnrollment.performance.grade,
-        completedAt: performance.completedAt ?? existingEnrollment.performance.completedAt
+        completedAt: performance.completedAt ?? existingEnrollment.performance.completedAt,
+        courseTopic: performance.courseTopic ?? existingEnrollment.performance.courseTopic
       };
     }
 
@@ -220,47 +195,32 @@ exports.updateEnrolledByUserId = async (req, res) => {
   }
 };
 
-
-// 📋 Get all users enrolled in a specific course
+// 📋 Get all users in a course
 exports.getUsersEnrolledInCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
 
     if (!courseId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Course ID is required in the URL',
-      });
+      return res.status(400).json({ success: false, message: 'Course ID is required' });
     }
 
     const enrollments = await Enrollment.find({ course: courseId }).populate('user');
 
     if (!enrollments || enrollments.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No users enrolled in this course',
-      });
+      return res.status(404).json({ success: false, message: 'No users found' });
     }
 
-    // Extract only user details
-    const enrolledUsers = enrollments.map((enroll) => enroll.user);
+    const users = enrollments.map((e) => e.user);
 
     res.status(200).json({
       success: true,
-      count: enrolledUsers.length,
-      data: enrolledUsers,
+      count: users.length,
+      data: users
     });
-
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
-
-
 
 // ❌ Delete enrollment
 exports.deleteEnrollmentByUserIdAndCourseId = async (req, res) => {
@@ -270,36 +230,32 @@ exports.deleteEnrollmentByUserIdAndCourseId = async (req, res) => {
     if (!userId || !courseId) {
       return res.status(400).json({
         success: false,
-        message: 'Both userId and courseId are required in the URL'
+        message: 'Both userId and courseId are required'
       });
     }
 
-    const deletedEnrollment = await Enrollment.findOneAndDelete({ user: userId, course: courseId });
+    const deleted = await Enrollment.findOneAndDelete({ user: userId, course: courseId });
 
-    if (!deletedEnrollment) {
+    if (!deleted) {
       return res.status(404).json({
         success: false,
-        message: 'No enrollment found for this user and course'
+        message: 'No enrollment found'
       });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: 'Enrollment deleted successfully',
-      data: deletedEnrollment
+      message: 'Enrollment deleted',
+      data: deleted
     });
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Server error',
       error: error.message
     });
   }
 };
-
-
-
-
 // @desc    Create a certificate
 // @route   POST /api/certificates
 // ✅ Create Certificate
