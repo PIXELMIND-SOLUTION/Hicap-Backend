@@ -1,4 +1,4 @@
-const {Enrollment,Certificate} = require('../models/enrollment');
+const { Enrollment, Certificate } = require('../models/enrollment');
 const { uploadImage } = require('../config/cloudinary');
 const mongoose = require('mongoose');
 
@@ -78,6 +78,7 @@ exports.getEnrolledCoursesByUser = async (req, res) => {
       });
     }
 
+    // Get all enrollments and populate course details
     const enrollments = await Enrollment.find({ user: userId }).populate('course');
 
     if (!enrollments || enrollments.length === 0) {
@@ -87,11 +88,17 @@ exports.getEnrolledCoursesByUser = async (req, res) => {
       });
     }
 
-    const enrolledCourses = enrollments.map((e) => e.course);
+    // Extract status and rank
+    const enrolledCourses = enrollments.map((e) => ({
+      status: e.status,
+      rank: e.rank,
+      course: e.course, // optional, if you want course details too
+    }));
 
     res.status(200).json({
       success: true,
-      data: enrolledCourses
+      data: enrolledCourses,
+      count: enrolledCourses.length,
     });
   } catch (error) {
     res.status(500).json({
@@ -101,6 +108,7 @@ exports.getEnrolledCoursesByUser = async (req, res) => {
     });
   }
 };
+
 
 // 📊 Get top performers by practicalPercentage in a course
 exports.getTopPracticalPerformersInCourse = async (req, res) => {
