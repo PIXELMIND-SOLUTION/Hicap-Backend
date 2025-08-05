@@ -3,8 +3,6 @@ const router = express.Router();
 const { processFiles } = require('../utils/fileHandler');const courseController = require('../controllers/courseController');
 const Controller = require('../controllers/enrollmentController');
 const upload = require('../utils/uploadMiddleware');
-const controller = require('../controllers/coursemodulecontroller');
-const uploadVideo = require('../utils/multer'); // ✅ Add this line
 
 
 
@@ -60,23 +58,7 @@ router.delete(
 router.delete("/Certificate/deleteById/:id", Controller.deleteCertificateById);
 
 
-router.post('/course-module', uploadVideo.any(), controller.createCourseModule);
 
 
-// 📄 READ ALL
-router.get('/course-module', controller.getAllCourseModules);
-
-// 📄 READ ONE
-router.get('/course-module/:id', controller.getCourseModuleById);
-
-// ✏️ UPDATE (with video re-uploads)
-router.put(
-  '/course-module/:id',
-  uploadVideo.any(),
-  controller.updateCourseModule
-);
-
-// ❌ DELETE
-router.delete('/course-module/:id', controller.deleteCourseModule);
 
 module.exports = router;
