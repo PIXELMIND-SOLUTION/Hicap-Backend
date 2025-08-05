@@ -23,6 +23,8 @@ const server = http.createServer(app);
 const io = require('socket.io')(server, {
   cors: { origin: "*" }
 });
+app.use('/api/course-module/uploads/videos', express.static(path.join(__dirname, 'uploads/videos')));
+
 
 // Attach Socket.IO to app
 app.set('io', io);
