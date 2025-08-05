@@ -14,6 +14,7 @@ const courseRoutes = require("./routes/courseRoutes");
 const user = require('./routes/registerUserRoute');
 const details =require('./routes/detailsRoute');  
 const interviewRoutes = require("./routes/interviewRoute");
+const courseModuleRoutes = require('./routes/courseModuleRoutes');
 
 
 const path = require("path");
@@ -53,6 +54,7 @@ app.use("/api", courseRoutes);
 app.use('/api', user);
 app.use('/api',details);
 app.use("/api", interviewRoutes);
+app.use("/api", courseModuleRoutes);
 
 
 
