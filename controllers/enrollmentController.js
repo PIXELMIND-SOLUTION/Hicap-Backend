@@ -1,7 +1,7 @@
 const { Enrollment, Certificate } = require('../models/enrollment');
 const { uploadImage, uploadToCloudinary } = require('../config/cloudinary');
 const mongoose = require('mongoose');
-
+const userRegister = require("../models/registerUser"); 
 
 // ➕ Create new enrollment
 exports.createEnrollment = async (req, res) => {
@@ -328,14 +328,20 @@ exports.createCertificate = async (req, res) => {
 
 // 📖 Get all Certificate Groups
 exports.getAllCertificates = async (req, res) => {
-  try {
-    const all = await Certificate.find().populate("certificates.user").populate("certificates.enrollment");
+   try {
+    const all = await Certificate.find()
+      .populate('certificates.user')       // this only works if User model is registered
+      .populate('certificates.enrollment'); // same for Enrollment
+
     res.status(200).json({ success: true, data: all });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Failed to fetch", error: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch',
+      error: err.message
+    });
   }
 };
-
 // 📖 Get Certificate Group by User ID
 exports.getCertificateByUserId = async (req, res) => {
   try {

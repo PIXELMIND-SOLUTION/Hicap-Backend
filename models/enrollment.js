@@ -53,7 +53,7 @@ rank: {
 }
 }, { timestamps: true });
 const certificateSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'userRegister', required: true },
   enrollment: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment', required: true },
   status: {
     image: { type: String, required: true },
