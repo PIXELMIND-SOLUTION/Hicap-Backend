@@ -52,31 +52,22 @@ rank: {
   }
 }
 }, { timestamps: true });
-
-// Certificate Schema
 const certificateSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "userRegister",
-    required: true
-  },
-  enrollment: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Enrollment",
-    required: true
-  },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  enrollment: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment', required: true },
   status: {
-    image: { type: String },
-    type: {
-      type: String,
-      enum: ["Pending", "Completed"],
-      default: "Pending"
-    }
+    image: { type: String, required: true },
+    type: { type: String, enum: ['Completed', 'Pending'], required: true }
   }
 });
+
+const certificateWrapperSchema = new mongoose.Schema({
+  certificates: [certificateSchema]
+}, { timestamps: true });
+
 // Create models
 const Enrollment = mongoose.model('Enrollment', enrollmentSchema);
-const Certificate = mongoose.model('Certificate', certificateSchema);
+const Certificate = mongoose.model('Certificate', certificateWrapperSchema);
 
 // Export models
 module.exports = {

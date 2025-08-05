@@ -26,7 +26,7 @@ router.put('/enrollments/:userId/:courseId', Controller.updateEnrolledByUserId);
 router.delete('/enrollments/:userId/:courseId', Controller.deleteEnrollmentByUserIdAndCourseId);
 
 // ➕ Create Certificate with image upload
-router.post("/Certificate", upload.single("image"), Controller.createCertificate);
+router.post("/Certificate", upload.array("images"), Controller.createCertificate);
 
 // 📖 Get all Certificates
 router.get("/Certificates", Controller.getAllCertificates);
@@ -39,9 +39,11 @@ router.get("/Certificate/:userId", Controller.getCertificateByUserId);
 
 // Update user's specific certificate
 router.put(
-  "/Certificate/:userId", upload.single("image"),
+  "/Certificate/:userId", upload.array("images"),
   Controller.updateCertificateByUserId
 );
+
+
 
 
 // Delete user's specific certificate
