@@ -1,100 +1,106 @@
 const CourseModule = require('../models/courseModuleSchema');
 
-// ➕ CREATE Course Module
+// ➕ Create Course Module
 exports.createCourseModule = async (req, res) => {
   try {
-    const { enrollment, course, modules } = req.body;
+    const { user, enrollment, course, modules } = req.body;
 
-    if (!enrollment || !course || !modules) {
-      return res.status(400).json({
-        success: false,
-        message: 'enrollment, course, and modules are required',
-      });
+    if (!user || !enrollment || !course || !modules) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
-    const newCourseModule = new CourseModule({ enrollment, course, modules });
-    await newCourseModule.save();
+    const newModule = await CourseModule.create({ user, enrollment, course, modules });
 
-    return res.status(201).json({
-      success: true,
-      message: 'Course module created successfully',
-      data: newCourseModule,
-    });
+    return res.status(201).json({ success: true, data: newModule });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 📥 READ all Course Modules
+// 📥 Get All Course Modules
 exports.getAllCourseModules = async (req, res) => {
   try {
-    const modules = await CourseModule.find().populate('enrollment course');
+    const modules = await CourseModule.find()
+      .populate('user')
+      .populate('enrollment')
+      .populate('course');
 
-    return res.status(200).json({
-      success: true,
-      message: 'All course modules fetched successfully',
-      data: modules,
-    });
+    return res.status(200).json({ success: true, data: modules });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 📥 READ Course Module by ID
+// 🔍 Get Course Module by ID
 exports.getCourseModuleById = async (req, res) => {
   try {
-    const module = await CourseModule.findById(req.params.id).populate('enrollment course');
+    const { id } = req.params;
+
+    const module = await CourseModule.findById(id)
+      .populate('user')
+      .populate('enrollment')
+      .populate('course');
 
     if (!module) {
-      return res.status(404).json({ success: false, message: 'Course module not found' });
+      return res.status(404).json({ success: false, message: 'Course Module not found' });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Course module fetched successfully',
-      data: module,
-    });
+    return res.status(200).json({ success: true, data: module });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 🔁 UPDATE Course Module
-exports.updateCourseModule = async (req, res) => {
+// 🔍 Get Course Modules by User ID
+exports.getCourseModulesByUserId = async (req, res) => {
   try {
-    const updatedModule = await CourseModule.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const { userId } = req.params;
 
-    if (!updatedModule) {
-      return res.status(404).json({ success: false, message: 'Course module not found' });
+    const modules = await CourseModule.find({ user: userId })
+      .populate('user')
+      .populate('enrollment')
+      .populate('course');
+
+    if (!modules || modules.length === 0) {
+      return res.status(404).json({ success: false, message: 'No course modules found for this user' });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Course module updated successfully',
-      data: updatedModule,
-    });
+    return res.status(200).json({ success: true, data: modules });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// ❌ DELETE Course Module
-exports.deleteCourseModule = async (req, res) => {
+// ✏️ Update Course Module by ID
+exports.updateCourseModuleById = async (req, res) => {
   try {
-    const deleted = await CourseModule.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    const updatedData = req.body;
+
+    const updated = await CourseModule.findByIdAndUpdate(id, updatedData, { new: true });
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Course Module not found' });
+    }
+
+    return res.status(200).json({ success: true, data: updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ❌ Delete Course Module by ID
+exports.deleteCourseModuleById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await CourseModule.findByIdAndDelete(id);
 
     if (!deleted) {
-      return res.status(404).json({ success: false, message: 'Course module not found' });
+      return res.status(404).json({ success: false, message: 'Course Module not found' });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Course module deleted successfully',
-    });
+    return res.status(200).json({ success: true, message: 'Course Module deleted successfully' });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }

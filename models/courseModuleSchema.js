@@ -7,13 +7,14 @@ const topicSchema = new mongoose.Schema({
   link: String,
 });
 
-const moduleSchema = new mongoose.Schema({}, { strict: false }); // allow any structure inside module
+const moduleSchema = new mongoose.Schema({}, { strict: false });
 
 const courseModuleSchema = new mongoose.Schema(
   {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'userRegister', required: true }, // 👈 added user reference
     enrollment: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment', required: true },
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
-    modules: [moduleSchema], // array of objects like { module1: [ { topic, ... }, ... ] }
+    modules: [moduleSchema],
   },
   { timestamps: true }
 );

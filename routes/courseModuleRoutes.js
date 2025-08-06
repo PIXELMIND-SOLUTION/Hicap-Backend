@@ -11,9 +11,11 @@ router.get('/courseModule', courseModuleController.getAllCourseModules);
 // READ BY ID
 router.get('/courseModule/:id', courseModuleController.getCourseModuleById);
 
+router.get('/courseModule/user/:userId', courseModuleController.getCourseModulesByUserId);
+
 // UPDATE
-router.put('/courseModule/:id', courseModuleController.updateCourseModule);
+router.put('/courseModule/:id', courseModuleController.updateCourseModuleById);
 
 // DELETE
-router.delete('/courseModule/:id', courseModuleController.deleteCourseModule);
+router.delete('/courseModule/:id', courseModuleController.deleteCourseModuleById);
 module.exports = router;
