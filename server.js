@@ -6,8 +6,6 @@ const dotenv = require('dotenv');
 const aboutRoutes = require("./routes/AboutUSRoute");
 const enquiryRoutes = require('./routes/EnquiryRoutes');
 const contentRoutes = require("./routes/contentRoutes");
-const homeRoutes = require('./routes/homeRoute');
-const homeFeatureRoutes = require('./routes/homeFeatureRoutes');
 const mentorRoutes = require("./routes/ourMentorRoute");
 const faqRoutes = require("./routes/faqRoutes");
 const courseRoutes = require("./routes/courseRoutes");
@@ -15,7 +13,7 @@ const user = require('./routes/registerUserRoute');
 const details =require('./routes/detailsRoute');  
 const interviewRoutes = require("./routes/interviewRoute");
 const courseModuleRoutes = require('./routes/courseModuleRoutes');
-
+const HomeScreenRoute =require('./routes/homeScreenRoutes')
 
 const path = require("path");
 dotenv.config();
@@ -46,8 +44,6 @@ mongoose.connect(process.env.MONGO_URI)
 app.use("/api", aboutRoutes);
 app.use('/api', enquiryRoutes);
 app.use("/api", contentRoutes);
-app.use('/api', homeRoutes);
-app.use("/api/home-features", homeFeatureRoutes);
 app.use("/api/our-mentor", mentorRoutes);
 app.use("/api", faqRoutes);
 app.use("/api", courseRoutes);
@@ -55,6 +51,7 @@ app.use('/api', user);
 app.use('/api',details);
 app.use("/api", interviewRoutes);
 app.use("/api", courseModuleRoutes);
+app.use('/api',HomeScreenRoute);
 
 
 
