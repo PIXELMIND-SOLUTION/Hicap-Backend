@@ -112,4 +112,15 @@ router.put("/whyChoose/:id", upload.array("images"), upcomingBatchController.upd
 // DELETE WhyChoose by ID
 router.delete("/whyChoose/:id", upcomingBatchController.deleteWhyChoose);
 
+
+
+// Add Abroad Student
+router.post("/abrodstudents", upload.any(), upcomingBatchController.addAbrodStudent);
+router.get("/abrodstudents", upcomingBatchController.getAllAbrodStudents);
+router.get("/abrodstudents/:id", upcomingBatchController.getAbrodStudentById);
+router.put("/abrodstudents/:id", upload.any(), upcomingBatchController.updateAbrodStudentById);
+router.delete("/abrodstudents/:id", upcomingBatchController.deleteAbrodStudentById);
+
+
+
 module.exports = router;

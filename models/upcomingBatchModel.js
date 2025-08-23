@@ -41,9 +41,25 @@ const WhyChooseSchema = new mongoose.Schema({
   whyChoose: { type: [WhyChooseItemSchema], default: [] }
 }, { timestamps: true });
 
+
+const detailSchema = new mongoose.Schema({
+  image: { type: String, required: true },
+  content: { type: String, required: true },
+});
+
+const abrodStudentSchema = new mongoose.Schema({
+  mainImage: { type: String, required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  details: { type: [detailSchema], default: [] },
+}, { timestamps: true });
+
+
+
 // Models
 const WhyChoose = mongoose.model("WhyChoose", WhyChooseSchema);
 const UpcomingBatch = mongoose.model("UpcomingBatch", upcomingBatchSchema);
 const Upcoming = mongoose.model("Upcoming", UpcomingSchema);
+const AbrodStudent = mongoose.model("AbrodStudent", abrodStudentSchema);
 
-module.exports = { UpcomingBatch, Upcoming, WhyChoose };
+module.exports = { UpcomingBatch, Upcoming, WhyChoose,AbrodStudent };
