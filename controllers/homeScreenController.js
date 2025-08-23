@@ -1,4 +1,4 @@
-const { HomeScreen, HomeFeature,Client,Review,Counter} = require("../models/HomeScreen");
+const { HomeScreen, HomeFeature,Client,Review,Counter,HomeDefferschems,HomeCourses} = require("../models/HomeScreen");
 const { uploadImage,uploadToCloudinary,uploadImages,uploadToCloudinarys  } = require('../config/cloudinary1');
 
 // Create or update home screen banners
@@ -499,5 +499,199 @@ exports.deleteCounter = async (req, res) => {
     res.status(200).json({ success: true, message: "Deleted successfully." });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
+
+// Add Home Deffer
+exports.addHomeDeffer = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: "Images are required" });
+    }
+
+    // Separate mainImage and deffer files
+    const mainImageFile = req.files.find(f => f.fieldname === "mainImage");
+    const defferFiles = req.files.filter(f => f.fieldname === "deffer");
+
+    if (!mainImageFile) {
+      return res.status(400).json({ success: false, message: "Main image is required" });
+    }
+
+    // Upload main image
+    const mainImageUrl = await uploadImage(mainImageFile.buffer, "homedeffers");
+
+    // Prepare content array
+    let contents = req.body.content || [];
+    if (!Array.isArray(contents)) contents = [contents];
+
+    // Upload deffer images with content
+    const defferData = [];
+    for (let i = 0; i < defferFiles.length; i++) {
+      const file = defferFiles[i];
+      const content = contents[i] || "";
+      const imageUrl = await uploadImage(file.buffer, "homedeffers");
+      defferData.push({ image: imageUrl, content });
+    }
+
+    // Save to DB
+    const newHomeDeffer = new HomeDefferschems({
+      mainImage: mainImageUrl,
+      deffer: defferData
+    });
+    await newHomeDeffer.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Home Deffer added successfully",
+      data: newHomeDeffer
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error", error });
+  }
+};
+
+// Get All Home Deffers
+exports.getAllHomeDeffers = async (req, res) => {
+  try {
+    const items = await HomeDefferschems.find();
+    res.status(200).json({ success: true, data: items });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error", error });
+  }
+};
+
+// Get Home Deffer By ID
+exports.getHomeDefferById = async (req, res) => {
+  try {
+    const item = await HomeDefferschems.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: "Home Deffer not found" });
+    res.status(200).json({ success: true, data: item });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error", error });
+  }
+};
+
+// Update Home Deffer By ID
+exports.updateHomeDefferById = async (req, res) => {
+  try {
+    const item = await HomeDefferschems.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: "Home Deffer not found" });
+
+    const mainImageFile = req.files.find(f => f.fieldname === "mainImage");
+    const defferFiles = req.files.filter(f => f.fieldname === "deffer");
+
+    // Update main image if provided
+    if (mainImageFile) {
+      item.mainImage = await uploadImage(mainImageFile.buffer, "homedeffers");
+    }
+
+    // Update deffer array if provided
+    if (defferFiles.length > 0) {
+      let contents = req.body.content || [];
+      if (!Array.isArray(contents)) contents = [contents];
+
+      const defferData = [];
+      for (let i = 0; i < defferFiles.length; i++) {
+        const file = defferFiles[i];
+        const content = contents[i] || "";
+        const imageUrl = await uploadImage(file.buffer, "homedeffers");
+        defferData.push({ image: imageUrl, content });
+      }
+      item.deffer = defferData;
+    }
+
+    await item.save();
+    res.status(200).json({
+      success: true,
+      message: "Home Deffer updated successfully",
+      data: item
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error", error });
+  }
+};
+
+// Delete Home Deffer By ID
+exports.deleteHomeDefferById = async (req, res) => {
+  try {
+    const item = await HomeDefferschems.findByIdAndDelete(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: "Home Deffer not found" });
+    res.status(200).json({ success: true, message: "Home Deffer deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error", error });
+  }
+};
+
+
+// POST: Create
+exports.createHomeCourses = async (req, res) => {
+  try {
+    const { title, name, content } = req.body;
+    if (!req.file) return res.status(400).json({ message: 'Image is required' });
+
+    const imageUrl = await uploadImage(req.file.buffer);
+
+    const homeCourses = await HomeCourses.create({ title, name, content, image: imageUrl });
+    res.status(201).json({ message: 'Created successfully', data: homeCourses });
+  } catch (error) {
+    res.status(500).json({ message: 'Creation failed', error: error.message });
+  }
+};
+
+// GET: All
+exports.getAllHomeCourses = async (req, res) => {
+  try {
+    const data = await HomeCourses.find();
+    res.status(200).json({ message: 'Fetched successfully', data });
+  } catch (error) {
+    res.status(500).json({ message: 'Fetch failed', error: error.message });
+  }
+};
+
+// GET: By ID
+exports.getHomeCoursesById = async (req, res) => {
+  try {
+    const data = await HomeCourses.findById(req.params.id);
+    if (!data) return res.status(404).json({ message: 'Not found' });
+    res.status(200).json({ message: 'Fetched successfully', data });
+  } catch (error) {
+    res.status(500).json({ message: 'Error', error: error.message });
+  }
+};
+
+// PUT: Update
+exports.updateHomeCourses = async (req, res) => {
+  try {
+    const { title, name, content } = req.body;
+    const updateData = { title, name, content };
+
+    if (req.file) {
+      const imageUrl = await uploadImage(req.file.buffer);
+      updateData.image = imageUrl;
+    }
+
+    const updated = await HomeCourses.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Not found' });
+
+    res.status(200).json({ message: 'Updated successfully', data: updated });
+  } catch (error) {
+    res.status(500).json({ message: 'Update failed', error: error.message });
+  }
+};
+
+// DELETE
+exports.deleteHomeCourses = async (req, res) => {
+  try {
+    const deleted = await HomeCourses.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Not found' });
+
+    res.status(200).json({ message: 'Deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Delete failed', error: error.message });
   }
 };

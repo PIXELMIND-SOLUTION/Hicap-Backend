@@ -122,4 +122,35 @@ router.put("/count/:id", homeScreenController.updateCounter);
 // Delete
 router.delete("/count/:id", homeScreenController.deleteCounter);
 
+
+// Add Home Deffer
+router.post(
+  "/deffer",upload.any(),
+  homeScreenController.addHomeDeffer
+);
+
+// Get All
+router.get("/deffers", homeScreenController.getAllHomeDeffers);
+
+// Get By ID
+router.get("/deffer/:id", homeScreenController.getHomeDefferById);
+
+// Update By ID
+router.put(
+  "/deffer/:id",upload.any(),
+  homeScreenController.updateHomeDefferById
+);
+
+// Delete By ID
+router.delete("/deffer/:id", homeScreenController.deleteHomeDefferById);
+
+
+// ✅ Correct routing for HomeCourses
+router.post('/Courses', upload.single('image'), homeScreenController.createHomeCourses);
+router.get('/Courses', homeScreenController.getAllHomeCourses);
+router.get('/Courses/:id', homeScreenController.getHomeCoursesById);
+router.put('/Courses/:id', upload.single('image'), homeScreenController.updateHomeCourses);
+router.delete('/Courses/:id', homeScreenController.deleteHomeCourses);
+
+
 module.exports = router;

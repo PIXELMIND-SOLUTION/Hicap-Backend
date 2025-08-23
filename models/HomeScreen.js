@@ -75,14 +75,54 @@ const CounterSchema = new mongoose.Schema({
   counters: { type: [CounterItemSchema], default: [] }
 }, { timestamps: true });
 
+
+
+const DefferItemSchema = new mongoose.Schema({
+  image: { type: String, required: true },
+  content: { type: String ,required: false},
+});
+
+const HomeDefferschemsSchema = new mongoose.Schema({
+  mainImage: { type: String, required: true }, // single separate image
+  deffer: {
+    type: [DefferItemSchema], // array of image+content items
+    default: []
+  }
+}, { timestamps: true });
+
+
+// HomeCourses Schema
+const homeCoursesSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  content: {
+    type: String,
+    required: true,
+  },
+  image: {
+    type: String,
+    required: true,
+  },
+});
+
+
+
 const Counter = mongoose.model("Counter", CounterSchema);
 const Review = mongoose.model("Review", reviewSchema);
 const HomeFeature = mongoose.model('HomeFeature', homeFeatureSchema);
 const HomeScreen = mongoose.model("HomeScreen", HomeScreenSchema);
 const Client = mongoose.model('Client', ContentSchema);
+const HomeDefferschems = mongoose.model("HomeDefferschems", HomeDefferschemsSchema);
+const HomeCourses = mongoose.model("HomeCourses", homeCoursesSchema);
 
 
 
 
 // ✅ Export both
-module.exports = { HomeScreen, HomeFeature,Client,Review,Counter };
+module.exports = { HomeScreen, HomeFeature,Client,Review,Counter,HomeDefferschems,HomeCourses };
