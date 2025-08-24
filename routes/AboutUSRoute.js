@@ -79,39 +79,6 @@ router.get("/upcomingBatch/:id", upcomingBatchController.getUpcomingBatchById);
 router.put("/upcomingBatch/:id", upcomingBatchController.updateUpcomingBatch);
 router.delete("/upcomingBatch/:id", upcomingBatchController.deleteUpcomingBatch);
 
-// CREATE upcoming (array of images + title + content)
-router.post("/upcoming", upload.array("images"), upcomingBatchController.createUpcoming);
-
-// GET all
-router.get("/upcoming", upcomingBatchController.getAllUpcoming);
-
-// GET by ID
-router.get("/upcoming/:id", upcomingBatchController.getUpcomingById);
-
-// UPDATE upcoming (optional new images)
-router.put("/upcoming/:id", upload.array("images"), upcomingBatchController.updateUpcoming);
-
-// DELETE
-router.delete("/upcoming/:id", upcomingBatchController.deleteUpcoming);
-
-
-// CREATE WhyChoose
-// Upload multiple images corresponding to array items
-router.post("/whyChoose", upload.array("images"), upcomingBatchController.createWhyChoose);
-
-// GET all WhyChoose items
-router.get("/whyChooses", upcomingBatchController.getAllWhyChoose);
-
-// GET a single WhyChoose by ID
-router.get("/whyChoose/:id", upcomingBatchController.getWhyChooseById);
-
-// UPDATE WhyChoose by ID
-// Upload multiple images if replacing any
-router.put("/whyChoose/:id", upload.array("images"), upcomingBatchController.updateWhyChoose);
-
-// DELETE WhyChoose by ID
-router.delete("/whyChoose/:id", upcomingBatchController.deleteWhyChoose);
-
 
 
 // Add Abroad Student

@@ -5,20 +5,10 @@ const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const { processFiles } = require('../utils/fileHandler');
-const courseController = require('../controllers/courseController');
 const Controller = require('../controllers/enrollmentController');                              
 
 
 
-// Routes
-router.post(
-  "/courseController", upload.any(),
-  courseController.createCourse
-);
-router.get("/courseController", courseController.getAllCourses);
-router.get("/courseController/:id", courseController.getCourseById);
-router.put("/courseController/:id", upload.any(), courseController.updateCourseById);
-router.delete("/courseController/:id", courseController.deleteCourseById);
 
 
 router.post('/enrollments', Controller.createEnrollment);
