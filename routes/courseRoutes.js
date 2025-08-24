@@ -1,21 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const { processFiles } = require('../utils/fileHandler');const courseController = require('../controllers/courseController');
-const Controller = require('../controllers/enrollmentController');
-const upload = require('../utils/uploadMiddleware');
+const multer = require("multer");
+// Multer for buffer uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+const { processFiles } = require('../utils/fileHandler');
+const courseController = require('../controllers/courseController');
+const Controller = require('../controllers/enrollmentController');                              
 
 
 
-// Create Course
+// Routes
 router.post(
-  '/course1',
-  processFiles,
+  "/courseController", upload.any(),
   courseController.createCourse
 );
-router.get('/course1', courseController.getAllCourses);
-router.get('/course1/:id', courseController.getCourseById);
-router.put('/course1/:id', processFiles, courseController.updateCourse);
-router.delete('/course1/:id', courseController.deleteCourse);
+router.get("/courseController", courseController.getAllCourses);
+router.get("/courseController/:id", courseController.getCourseById);
+router.put("/courseController/:id", upload.any(), courseController.updateCourseById);
+router.delete("/courseController/:id", courseController.deleteCourseById);
 
 
 router.post('/enrollments', Controller.createEnrollment);

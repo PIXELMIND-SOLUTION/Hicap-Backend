@@ -4,6 +4,7 @@ const multer = require("multer");
 // Multer setup for memory storage (buffer upload)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+const courseController = require('../controllers/courseController');
 const homeScreenController = require("../controllers/homeScreenController");
 
 router.post("/hero-banners", upload.array("images"), homeScreenController.createOrUpdateHomeScreen);
@@ -152,5 +153,16 @@ router.get('/Courses/:id', homeScreenController.getHomeCoursesById);
 router.put('/Courses/:id', upload.single('image'), homeScreenController.updateHomeCourses);
 router.delete('/Courses/:id', homeScreenController.deleteHomeCourses);
 
+// Routes
+router.post(
+  "/courseController", upload.any(),
+  courseController.createCourse
+);
+router.get("/courseController", courseController.getAllCourses);
+router.get('/courseControllers', courseController.getAllCourses);
+router.get('/courseController/:id', courseController.getCourseById);
+router.get('/courseController/category/:category', courseController.getCourseByCategory);
+router.put('/courseController/:id', upload.any(), courseController.updateCourseById);
+router.delete('/courseController/:id', courseController.deleteCourseById);
 
 module.exports = router;

@@ -65,4 +65,5 @@ const uploadToCloudinarys = async (filePath, folderName = "uploads") => { // Cha
   }
 };
 
+
 module.exports = { cloudinary, uploadImage, uploadToCloudinary,uploadImages,uploadToCloudinarys };
