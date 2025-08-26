@@ -6,12 +6,20 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const courseController = require('../controllers/courseController');
 const homeScreenController = require("../controllers/homeScreenController");
+const { validateOtpRequest, validateOtpVerification } = require("../utils/validateInput");
+
+
+
 
 router.post("/hero-banners", upload.array("images"), homeScreenController.createOrUpdateHomeScreen);
 router.get("/hero-banners", homeScreenController.getAllBanners);
 router.get("/hero-banners/:bannerId", homeScreenController.getBannerById);
 router.put("/hero-banners/:bannerId", upload.array("images"), homeScreenController.updateBannerById);
 router.delete("/hero-banners/:bannerId", homeScreenController.deleteBannerById);
+
+
+
+
 
 // CREATE (with image uploads)
 router.post(
@@ -44,6 +52,11 @@ router.delete(
   "/home-features/:id",
   homeScreenController.deleteHomeFeature
 );
+
+
+
+
+
 
 // CREATE (with optional image)
 router.post(
@@ -78,6 +91,10 @@ router.delete(
 );
 
 
+
+
+
+
 // CREATE (with at least one image)
 router.post(
   "/clients",
@@ -110,6 +127,11 @@ router.delete(
   homeScreenController.deleteClient
 );
 
+
+
+
+
+
 // Create
 router.post("/count", homeScreenController.createCounter);
 
@@ -122,6 +144,11 @@ router.put("/count/:id", homeScreenController.updateCounter);
 
 // Delete
 router.delete("/count/:id", homeScreenController.deleteCounter);
+
+
+
+
+
 
 
 // Add Home Deffer
@@ -146,12 +173,21 @@ router.put(
 router.delete("/deffer/:id", homeScreenController.deleteHomeDefferById);
 
 
+
+
+
+
 // ✅ Correct routing for HomeCourses
 router.post('/Courses', upload.single('image'), homeScreenController.createHomeCourses);
 router.get('/Courses', homeScreenController.getAllHomeCourses);
 router.get('/Courses/:id', homeScreenController.getHomeCoursesById);
 router.put('/Courses/:id', upload.single('image'), homeScreenController.updateHomeCourses);
 router.delete('/Courses/:id', homeScreenController.deleteHomeCourses);
+
+
+
+
+
 
 // Routes
 router.post(
@@ -162,7 +198,27 @@ router.get("/courseController", courseController.getAllCourses);
 router.get('/courseControllers', courseController.getAllCourses);
 router.get('/courseController/:id', courseController.getCourseById);
 router.get('/courseController/category/:category', courseController.getCourseByCategory);
-router.put('/courseController/:id', upload.any(), courseController.updateCourseById);
+router.put("/courseController/:id", upload.any(), courseController.updateCourseById);
 router.delete('/courseController/:id', courseController.deleteCourseById);
+
+
+
+
+
+
+router.post("/send-otp", validateOtpRequest, courseController.sendOtp);
+router.post("/verify-otp", validateOtpVerification, courseController.verifyOtp);
+
+
+
+
+router.post("/getintouch", courseController.addGetInTouch);
+router.get("/getintouchs", courseController.getAllGetInTouch);
+router.get("/getintouch/:id", courseController.getGetInTouchById);
+router.put("/getintouch/:id", courseController.updateGetInTouchById);
+router.delete("/getintouch/:id", courseController.deleteGetInTouchById);
+
+
+
 
 module.exports = router;
