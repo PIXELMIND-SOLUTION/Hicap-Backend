@@ -31,7 +31,7 @@ router.delete("/doubtSession/:id", doubtSessionController.deleteDoubtSession);
 
 router.post("/contactus", contactus.addEnquiry);
 router.get("/contactus", contactus.getAllEnquiries);
-router.get("/contactus/:id", contactus.getEnquiryById);
+router.get("/contactus/:id", contactus.getcontactenqById);
 router.put("/contactus/:id", contactus.updateEnquiryById);
 router.delete("/contactus/:id", contactus.deleteEnquiryById);
 

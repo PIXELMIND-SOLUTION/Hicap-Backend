@@ -10,16 +10,24 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Upload buffer directly using upload_stream
-const uploadImage = (fileBuffer, folderName = "uploads") => {
+// Choose resource type dynamically
+function getResourceType(fileName = "") {
+  if (fileName.toLowerCase().endsWith(".pdf")) {
+    return "raw"; // Must be raw for PDFs
+  }
+  return "auto"; // auto works for images and videos
+}
+
+const uploadImage = (fileBuffer, folderName = "uploads", fileName = "") => {
   return new Promise((resolve, reject) => {
+    const resourceType = getResourceType(fileName);
     const stream = cloudinary.uploader.upload_stream(
-      { folder: folderName, resource_type: "auto" },
+      { folder: folderName, resource_type: resourceType },
       (error, result) => {
         if (error) {
           reject(error);
         } else {
-          resolve(result.secure_url);
+          resolve(result.secure_url); // This URL works for PDFs as well
         }
       }
     );
@@ -27,19 +35,19 @@ const uploadImage = (fileBuffer, folderName = "uploads") => {
   });
 };
 
-// Make uploadToCloudinary also work with buffer (unify both)
-const uploadToCloudinary = async (fileBuffer, folderName = "uploads") => {
+const uploadToCloudinary = async (fileBuffer, folderName = "uploads", fileName = "") => {
   try {
-    return await uploadImage(fileBuffer, folderName); // reuse buffer upload
+    return await uploadImage(fileBuffer, folderName, fileName || "");
   } catch (error) {
     throw error;
   }
 };
 
-const uploadImages = (fileBuffer) => {
+const uploadImages = (fileBuffer, fileName = "") => {
   return new Promise((resolve, reject) => {
+    const resourceType = getResourceType(fileName);
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "uploads" }, // Changed from "courses"
+      { folder: "uploads", resource_type: resourceType },
       (error, result) => {
         if (error) {
           reject(error);
@@ -48,16 +56,16 @@ const uploadImages = (fileBuffer) => {
         }
       }
     );
-
     streamifier.createReadStream(fileBuffer).pipe(stream);
   });
 };
 
-const uploadToCloudinarys = async (filePath, folderName = "uploads") => { // Changed default folder
+const uploadToCloudinarys = async (filePath, folderName = "uploads") => {
   try {
+    const resourceType = filePath.toLowerCase().endsWith(".pdf") ? "raw" : "auto";
     const result = await cloudinary.uploader.upload(filePath, {
       folder: folderName,
-      resource_type: "auto",
+      resource_type: resourceType,
     });
     return result.secure_url;
   } catch (error) {
@@ -65,5 +73,4 @@ const uploadToCloudinarys = async (filePath, folderName = "uploads") => { // Cha
   }
 };
 
-
-module.exports = { cloudinary, uploadImage, uploadToCloudinary,uploadImages,uploadToCloudinarys };
+module.exports = { cloudinary, uploadImage, uploadToCloudinary, uploadImages, uploadToCloudinarys };
