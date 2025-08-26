@@ -13,12 +13,11 @@ const Controller = require('../controllers/enrollmentController');
 
 router.post('/enrollments', Controller.createEnrollment);
 router.get('/enrollments', Controller.getAllEnrollments);
-router.get('/enrollments/top-practical/:courseId', Controller.getTopPracticalPerformersInCourse);
-router.get('/enrollments/:courseId/users', Controller.getUsersEnrolledInCourse);
-router.get('/enrollments/:userId', Controller.getEnrolledCoursesByUser);
+// 🔍 Get Enrollment by ID
+router.get("/enrollment/:id", Controller.getEnrollmentById);
 
-router.put('/enrollments/:userId/:courseId', Controller.updateEnrolledByUserId);
-router.delete('/enrollments/:userId/:courseId', Controller.deleteEnrollmentByUserIdAndCourseId);
+router.put('/enrollments/:Id', Controller.updateEnrolledByUserId);
+router.delete('/enrollments/:Id', Controller.deleteEnrollmentById);
 
 // ➕ Create Certificate with image upload
 router.post("/Certificate", upload.array("images"), Controller.createCertificate);

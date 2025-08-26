@@ -2,266 +2,158 @@ const { Enrollment, Certificate } = require('../models/enrollment');
 const { uploadImage, uploadToCloudinary } = require('../config/cloudinary');
 const mongoose = require('mongoose');
 const userRegister = require("../models/registerUser"); 
+const {Course} = require("../models/coursesModel");
+
 
 // ➕ Create new enrollment
 exports.createEnrollment = async (req, res) => {
   try {
-    const { user, course, status, performance } = req.body;
+    const { batchNumber, batchName, courseId, startDate, timings, duration, category } = req.body;
 
-    if (!user || !course) {
+    if (!batchNumber || !batchName || !courseId || !startDate || !timings || !duration || !category) {
       return res.status(400).json({
         success: false,
-        message: 'User and Course are required'
+        message: "batchNumber, batchName, courseId, startDate, timings, duration, and category are required"
       });
     }
 
-    const alreadyExists = await Enrollment.findOne({ user, course });
-    if (alreadyExists) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already enrolled in this course'
-      });
+    // Validate courseId
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
     }
 
-    const enrollmentData = {
-      user,
-      course,
-      status: status || 'enrolled'
-    };
+    const enrollment = new Enrollment({
+      batchNumber,
+      batchName,
+      courseId,
+      startDate,
+      timings,
+      duration,
+      category
+    });
 
-    if (performance && typeof performance === 'object') {
-      enrollmentData.performance = {
-        theoreticalPercentage: performance.theoreticalPercentage || 0,
-        practicalPercentage: performance.practicalPercentage || 0,
-        feedback: performance.feedback || '',
-        grade: performance.grade || '',
-        completedAt: performance.completedAt || null,
-        courseTopic: performance.courseTopic || ''
-      };
-    }
-
-    const newEnrollment = await Enrollment.create(enrollmentData);
+    const savedEnrollment = await enrollment.save();
+    const populatedEnrollment = await Enrollment.findById(savedEnrollment._id).populate("courseId");
 
     return res.status(201).json({
       success: true,
-      message: 'Enrollment created successfully',
-      data: newEnrollment
+      message: "Enrollment created successfully",
+      data: populatedEnrollment
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
+    console.error("Error creating enrollment:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 // 📖 Get all enrollments
 exports.getAllEnrollments = async (req, res) => {
   try {
-    const enrollments = await Enrollment.find().populate('user').populate('course');
-    res.status(200).json({ success: true, data: enrollments });
+    const enrollments = await Enrollment.find().populate("courseId");
+    return res.status(200).json({
+      success: true,
+      message: "All enrollments fetched successfully",
+      data: enrollments
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    console.error("Error fetching enrollments:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-// 📖 Get enrolled courses by user
-exports.getEnrolledCoursesByUser = async (req, res) => {
+// 🔍 Get enrollment by ID
+exports.getEnrollmentById = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { id } = req.params;
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID is required'
-      });
-    }
-
-    // Get all enrollments and populate course details
-    const enrollments = await Enrollment.find({ user: userId }).populate('course');
-
-    if (!enrollments || enrollments.length === 0) {
+    const enrollment = await Enrollment.findById(id).populate("courseId");
+    if (!enrollment) {
       return res.status(404).json({
         success: false,
-        message: 'No enrolled courses found'
+        message: "Enrollment not found"
       });
     }
 
-    // Extract status and rank
-    const enrolledCourses = enrollments.map((e) => ({
-      status: e.status,
-      rank: e.rank,
-      course: e.course, // optional, if you want course details too
-    }));
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      data: enrolledCourses,
-      count: enrolledCourses.length,
+      message: "Enrollment fetched successfully",
+      data: enrollment
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
+    console.error("Error fetching enrollment by ID:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 
-// 📊 Get top performers by practicalPercentage in a course
-exports.getTopPracticalPerformersInCourse = async (req, res) => {
-  try {
-    const { courseId } = req.params;
-
-    if (!courseId) {
-      return res.status(400).json({ success: false, message: "Course ID is required" });
-    }
-
-    let enrollments = await Enrollment.find({ course: courseId }).populate("user");
-
-    if (!enrollments || enrollments.length === 0) {
-      return res.status(404).json({ success: false, message: "No users enrolled" });
-    }
-
-    enrollments.sort((a, b) => {
-      if (b.performance.practicalPercentage === a.performance.practicalPercentage) {
-        return b.performance.theoreticalPercentage - a.performance.theoreticalPercentage;
-      }
-      return b.performance.practicalPercentage - a.performance.practicalPercentage;
-    });
-
-    for (let i = 0; i < enrollments.length; i++) {
-      enrollments[i].rank = i + 1;
-      await enrollments[i].save();
-    }
-
-    res.status(200).json({
-      success: true,
-      count: enrollments.length,
-      message: "Ranks assigned",
-      data: enrollments,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
-  }
-};
 
 // ✏️ Update enrollment
 exports.updateEnrolledByUserId = async (req, res) => {
   try {
-    const { userId, courseId } = req.params;
-    const { status, performance } = req.body;
+    const { id } = req.params;
+    const { batchNumber, batchName, courseId, startDate, timings, duration, category } = req.body;
 
-    if (!userId || !courseId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Both userId and courseId are required'
-      });
+    const updateData = {};
+    if (batchNumber) updateData.batchNumber = batchNumber;
+    if (batchName) updateData.batchName = batchName;
+    if (startDate) updateData.startDate = startDate;
+    if (timings) updateData.timings = timings;
+    if (duration) updateData.duration = duration;
+    if (category) updateData.category = category;
+
+    if (courseId) {
+      const course = await Course.findById(courseId);
+      if (!course) {
+        return res.status(404).json({ success: false, message: "Course not found" });
+      }
+      updateData.courseId = courseId;
     }
 
-    const existingEnrollment = await Enrollment.findOne({ user: userId, course: courseId });
+    const updatedEnrollment = await Enrollment.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    ).populate("courseId");
 
-    if (!existingEnrollment) {
+    if (!updatedEnrollment) {
       return res.status(404).json({
         success: false,
-        message: 'Enrollment not found'
+        message: "Enrollment not found"
       });
     }
 
-    if (status) {
-      existingEnrollment.status = status;
-    }
-
-    if (performance && typeof performance === 'object') {
-      existingEnrollment.performance = {
-        ...existingEnrollment.performance._doc,
-        theoreticalPercentage: performance.theoreticalPercentage ?? existingEnrollment.performance.theoreticalPercentage,
-        practicalPercentage: performance.practicalPercentage ?? existingEnrollment.performance.practicalPercentage,
-        feedback: performance.feedback ?? existingEnrollment.performance.feedback,
-        grade: performance.grade ?? existingEnrollment.performance.grade,
-        completedAt: performance.completedAt ?? existingEnrollment.performance.completedAt,
-        courseTopic: performance.courseTopic ?? existingEnrollment.performance.courseTopic
-      };
-    }
-
-    const updatedEnrollment = await existingEnrollment.save();
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: 'Enrollment updated successfully',
+      message: "Enrollment updated successfully",
       data: updatedEnrollment
     });
-
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
+    console.error("Error updating enrollment:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// 📋 Get all users in a course
-exports.getUsersEnrolledInCourse = async (req, res) => {
+
+// 🗑️ Delete enrollment by ID
+exports.deleteEnrollmentById = async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { id } = req.params;
 
-    if (!courseId) {
-      return res.status(400).json({ success: false, message: 'Course ID is required' });
-    }
-
-    const enrollments = await Enrollment.find({ course: courseId }).populate('user');
-
-    if (!enrollments || enrollments.length === 0) {
-      return res.status(404).json({ success: false, message: 'No users found' });
-    }
-
-    const users = enrollments.map((e) => e.user);
-
-    res.status(200).json({
-      success: true,
-      count: users.length,
-      data: users
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
-  }
-};
-
-// ❌ Delete enrollment
-exports.deleteEnrollmentByUserIdAndCourseId = async (req, res) => {
-  try {
-    const { userId, courseId } = req.params;
-
-    if (!userId || !courseId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Both userId and courseId are required'
-      });
-    }
-
-    const deleted = await Enrollment.findOneAndDelete({ user: userId, course: courseId });
-
-    if (!deleted) {
+    const deletedEnrollment = await Enrollment.findByIdAndDelete(id);
+    if (!deletedEnrollment) {
       return res.status(404).json({
         success: false,
-        message: 'No enrollment found'
+        message: "Enrollment not found"
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: 'Enrollment deleted',
-      data: deleted
+      message: "Enrollment deleted successfully"
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
+    console.error("Error deleting enrollment:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 // @desc    Create a certificate
