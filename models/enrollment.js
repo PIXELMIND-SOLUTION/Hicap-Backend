@@ -5,10 +5,13 @@ const enrollmentSchema = new mongoose.Schema({
   batchNumber: { type: String, required: true },
   batchName: { type: String, required: true },
   courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
-  startDate: { type: Date, required: true },    // new field
-  timings: { type: String, required: true },    // new field
-  duration: { type: String, required: true },   // new field
-  category: { type: String, required: true }    // new field
+  startDate: { type: Date, required: true },
+  timings: { type: String, required: true },
+  duration: { type: String, required: true },
+  category: { type: String, required: true },
+  enrolledUsers: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "userRegister" }
+  ]
 }, { timestamps: true });
 
 

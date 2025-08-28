@@ -87,6 +87,7 @@ exports.getEnrollmentById = async (req, res) => {
 
 
 
+
 // ✏️ Update enrollment
 exports.updateEnrolledByUserId = async (req, res) => {
   try {
@@ -306,5 +307,102 @@ exports.deleteCertificateById = async (req, res) => {
     res.status(200).json({ success: true, message: "Certificate entry deleted" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+  }
+};
+
+// 👤 Add User to Enrollment
+exports.addEnrollmentToUser = async (req, res) => {
+  try {
+    const { enrollmentId, userId } = req.body;
+
+    // 1️⃣ Validate user
+    const user = await userRegister.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // 2️⃣ Validate enrollment
+    const enrollment = await Enrollment.findById(enrollmentId);
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: "Enrollment not found" });
+    }
+
+    // 3️⃣ Add user to enrollment if not already enrolled
+    const alreadyEnrolledInEnrollment = enrollment.enrolledUsers.some(
+      (u) => u.toString() === userId
+    );
+    if (!alreadyEnrolledInEnrollment) {
+      enrollment.enrolledUsers.push(userId);
+      await enrollment.save();
+    }
+
+    // 4️⃣ Add enrollment to user's enrolledCourses if not already there
+    const alreadyEnrolledInUser = user.enrolledCourses.some(
+      (e) => e.toString() === enrollmentId
+    );
+    if (!alreadyEnrolledInUser) {
+      user.enrolledCourses.push(enrollmentId);
+      await user.save();
+    }
+
+    // 5️⃣ Populate enrolled users before sending response
+    const updatedEnrollment = await Enrollment.findById(enrollmentId)
+      .populate('enrolledUsers', 'fullName email');
+
+    res.status(200).json({
+      success: true,
+      message: alreadyEnrolledInEnrollment
+        ? "User already enrolled in this batch"
+        : "User successfully added to enrollment",
+      data: {
+        _id: updatedEnrollment._id,
+        batchNumber: updatedEnrollment.batchNumber,
+        batchName: updatedEnrollment.batchName,
+        enrolledUsers: updatedEnrollment.enrolledUsers,
+        userCount: updatedEnrollment.enrolledUsers.length
+      }
+    });
+  } catch (error) {
+    console.error("Error adding user:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+exports.getEnrollmentWithUserStatus = async (req, res) => {
+  try {
+    const { enrollmentId, userId } = req.params;
+
+    const enrollment = await Enrollment.findById(enrollmentId)
+      .populate('courseId', 'name')
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: "Enrollment not found" });
+    }
+
+    // Check if this specific user is enrolled
+    const isEnrolled = enrollment.enrolledUsers.some(
+      (user) => user._id.toString() === userId
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: enrollment._id,
+        batchNumber: enrollment.batchNumber,
+        batchName: enrollment.batchName,
+        courseId: enrollment.courseId,
+        startDate: enrollment.startDate,
+        timings: enrollment.timings,
+        duration: enrollment.duration,
+        category: enrollment.category,
+        isEnrolled
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching enrollment with user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
   }
 };

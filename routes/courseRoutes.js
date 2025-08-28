@@ -19,6 +19,12 @@ router.get("/enrollment/:id", Controller.getEnrollmentById);
 router.put('/enrollments/:Id', Controller.updateEnrolledByUserId);
 router.delete('/enrollments/:Id', Controller.deleteEnrollmentById);
 
+router.post('/enrollments/add-user', Controller.addEnrollmentToUser);
+// In enrollmentRoutes.js
+router.get('/enrollments/:enrollmentId/user/:userId', Controller.getEnrollmentWithUserStatus);
+
+
+
 // ➕ Create Certificate with image upload
 router.post("/Certificate", upload.array("images"), Controller.createCertificate);
 

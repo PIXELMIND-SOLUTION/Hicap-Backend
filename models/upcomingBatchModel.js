@@ -7,8 +7,7 @@ const batchSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   timing: { type: String, required: true },
   duration: { type: String, required: true },
-  mentor: { type: String, required: true },
-  type: { type: String, required: true },
+  type: { type: String },
   categorie: { type: String, enum: ['Regular', 'Weekend'], required: true }
 });
 
