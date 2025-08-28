@@ -16,12 +16,16 @@ router.get('/enrollments', Controller.getAllEnrollments);
 // 🔍 Get Enrollment by ID
 router.get("/enrollment/:id", Controller.getEnrollmentById);
 
+
 router.put('/enrollments/:Id', Controller.updateEnrolledByUserId);
 router.delete('/enrollments/:Id', Controller.deleteEnrollmentById);
 
 router.post('/enrollments/add-user', Controller.addEnrollmentToUser);
-// In enrollmentRoutes.js
-router.get('/enrollments/:enrollmentId/user/:userId', Controller.getEnrollmentWithUserStatus);
+// Get all enrollments of a user
+router.get('/user/:userId/enrollments', Controller.getEnrollmentsByUserId);
+
+// Get all users of an enrollment
+router.get('/enrollment/:enrollmentId/users', Controller.getUsersByEnrollmentId);
 
 
 

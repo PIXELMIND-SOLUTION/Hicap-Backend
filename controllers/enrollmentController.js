@@ -368,41 +368,64 @@ exports.addEnrollmentToUser = async (req, res) => {
   }
 };
 
-exports.getEnrollmentWithUserStatus = async (req, res) => {
-  try {
-    const { enrollmentId, userId } = req.params;
 
-    const enrollment = await Enrollment.findById(enrollmentId)
-      .populate('courseId', 'name')
+// 👤 Get all enrollments for a user
+exports.getEnrollmentsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate user
+    const user = await userRegister.findById(userId).populate({
+      path: 'enrolledCourses',
+      select: 'batchNumber batchName startDate timings duration'
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        _id: user._id,
+        fullName: user.firstName + " " + user.lastName,
+        email: user.email,
+      },
+      enrolledCourses: user.enrolledCourses
+    });
+  } catch (error) {
+    console.error("Error fetching user enrollments:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+
+// 📋 Get all users in an enrollment
+exports.getUsersByEnrollmentId = async (req, res) => {
+  try {
+    const { enrollmentId } = req.params;
+
+    const enrollment = await Enrollment.findById(enrollmentId).populate('enrolledUsers', 'fullName email');
+
     if (!enrollment) {
       return res.status(404).json({ success: false, message: "Enrollment not found" });
     }
 
-    // Check if this specific user is enrolled
-    const isEnrolled = enrollment.enrolledUsers.some(
-      (user) => user._id.toString() === userId
-    );
-
     res.status(200).json({
       success: true,
-      data: {
+      enrollment: {
         _id: enrollment._id,
         batchNumber: enrollment.batchNumber,
         batchName: enrollment.batchName,
-        courseId: enrollment.courseId,
         startDate: enrollment.startDate,
         timings: enrollment.timings,
         duration: enrollment.duration,
-        category: enrollment.category,
-        isEnrolled
-      }
+      },
+      enrolledUsers: enrollment.enrolledUsers,
+      userCount: enrollment.enrolledUsers.length
     });
   } catch (error) {
-    console.error("Error fetching enrollment with user:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message
-    });
+    console.error("Error fetching enrolled users:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
