@@ -377,7 +377,11 @@ exports.getEnrollmentsByUserId = async (req, res) => {
     // Validate user
     const user = await userRegister.findById(userId).populate({
       path: 'enrolledCourses',
-      select: 'batchNumber batchName startDate timings duration'
+      select: 'batchNumber batchName startDate timings duration type categorie courseId',
+      populate: {
+        path: 'courseId', // populate full course details
+        select: '-__v -createdAt -updatedAt' // select all course fields except unnecessary ones
+      }
     });
 
     if (!user) {
@@ -390,15 +394,15 @@ exports.getEnrollmentsByUserId = async (req, res) => {
         _id: user._id,
         fullName: user.firstName + " " + user.lastName,
         email: user.email,
+        phoneNumber: user.phoneNumber
       },
       enrolledCourses: user.enrolledCourses
     });
   } catch (error) {
-    console.error("Error fetching user enrollments:", error);
+    console.error("Error fetching enrolled courses:", error);
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
-
 
 // 📋 Get all users in an enrollment
 exports.getUsersByEnrollmentId = async (req, res) => {
@@ -421,6 +425,7 @@ exports.getUsersByEnrollmentId = async (req, res) => {
         timings: enrollment.timings,
         duration: enrollment.duration,
       },
+
       enrolledUsers: enrollment.enrolledUsers,
       userCount: enrollment.enrolledUsers.length
     });

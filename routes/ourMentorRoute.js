@@ -6,6 +6,21 @@ const upload = multer({ storage });
 
 const mentorController = require("../controllers/ourMentorsController");
 
+// REGISTER & LOGIN
+router.post('/mentor/register', mentorController.registerMentor);
+router.post('/mentor/login', mentorController.loginMentor);
+
+// READ
+router.get('/mentor', mentorController.getAllMentors);
+router.get('/mentor/:id', mentorController.getMentorById);
+
+// UPDATE
+router.put('/mentor/:id', mentorController.updateMentor);
+
+// DELETE
+router.delete('/mentor/:id', mentorController.deleteMentor);
+
+
 // 🔥 EXPERIENCE ROUTES - define FIRST to avoid :id conflicts
 router.post("/experience", upload.single("image"), mentorController.createMentorExperience);
 router.get("/experience", mentorController.getAllMentorExperiences);

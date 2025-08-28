@@ -1,6 +1,141 @@
-const { OurMentor, MentorExperience } = require("../models/ourMentors");
+const { OurMentor, MentorExperience ,Mentor} = require("../models/ourMentors");
 const { uploadImage } = require("../config/cloudinary");
+const bcrypt = require('bcryptjs');
+const generateToken = require('../config/token');
+const Enrollment = require('../models/enrollment');
 
+
+
+
+// REGISTER MENTOR
+exports.registerMentor = async (req, res) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, password, confirmpassword, expertise } = req.body;
+
+    if (!firstName || !lastName || !email || !phoneNumber || !password || !confirmpassword) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    if (password !== confirmpassword) {
+      return res.status(400).json({ success: false, message: 'Passwords do not match' });
+    }
+
+    const existingMentor = await Mentor.findOne({ $or: [{ email }, { phoneNumber }] });
+    if (existingMentor) {
+      return res.status(400).json({ success: false, message: 'Email or phone already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newMentor = await Mentor.create({
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      password: hashedPassword,
+      expertise
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Mentor registered successfully',
+      data: {
+        _id: newMentor._id,
+        name: `${newMentor.firstName} ${newMentor.lastName}`,
+        email: newMentor.email,
+        phoneNumber: newMentor.phoneNumber,
+        token: generateToken(newMentor._id),
+      },
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// LOGIN MENTOR
+exports.loginMentor = async (req, res) => {
+  try {
+    const { phoneNumber, password } = req.body;
+
+    const mentor = await Mentor.findOne({ phoneNumber });
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: 'Mentor not found' });
+    }
+
+    const isMatch = await bcrypt.compare(password, mentor.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        _id: mentor._id,
+        name: `${mentor.firstName} ${mentor.lastName}`,
+        email: mentor.email,
+        phoneNumber: mentor.phoneNumber,
+        token: generateToken(mentor._id),
+      },
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// GET ALL MENTORS
+exports.getAllMentors = async (req, res) => {
+  try {
+    const mentors = await Mentor.find().select('-password');
+    res.status(200).json({ success: true, data: mentors });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// GET MENTOR BY ID
+exports.getMentorById = async (req, res) => {
+  try {
+    const mentor = await Mentor.findById(req.params.id).select('-password');
+    if (!mentor) return res.status(404).json({ success: false, message: 'Mentor not found' });
+    res.status(200).json({ success: true, data: mentor });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// UPDATE MENTOR
+exports.updateMentor = async (req, res) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, expertise } = req.body;
+
+    const mentor = await Mentor.findByIdAndUpdate(
+      req.params.id,
+      { firstName, lastName, email, phoneNumber, expertise },
+      { new: true }
+    ).select('-password');
+
+    if (!mentor) return res.status(404).json({ success: false, message: 'Mentor not found' });
+
+    res.status(200).json({ success: true, message: 'Mentor updated successfully', data: mentor });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// DELETE MENTOR
+exports.deleteMentor = async (req, res) => {
+  try {
+    const mentor = await Mentor.findByIdAndDelete(req.params.id);
+    if (!mentor) return res.status(404).json({ success: false, message: 'Mentor not found' });
+
+    res.status(200).json({ success: true, message: 'Mentor deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
 // CREATE
 exports.createMentor = async (req, res) => {
   try {
