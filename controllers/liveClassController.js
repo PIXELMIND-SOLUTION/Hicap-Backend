@@ -243,6 +243,90 @@ exports.getAllLiveClasses = async (req, res) => {
   }
 };
 
+// GET LIVE CLASSES BY USER ID
+exports.getLiveClassesByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate userId format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid user ID format' 
+      });
+    }
+
+    // Find all enrollments where this user is in enrolledUsers array
+    const enrollments = await Enrollment.find({ enrolledUsers: userId }).select('_id');
+    if (!enrollments || enrollments.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No enrollments found for this user' 
+      });
+    }
+
+    const enrollmentIds = enrollments.map(e => e._id);
+
+    // Fetch all live classes linked to these enrollments
+    const liveClasses = await LiveClass.find({ enrollmentIdRef: { $in: enrollmentIds } })
+      .populate({
+        path: 'enrollmentIdRef',
+        populate: {
+          path: 'courseId',
+          select: 'name description'
+        }
+      })
+      .populate('mentorId', 'firstName lastName email expertise subjects')
+      .select('-__v')
+      .sort({ date: -1 });  // latest classes first
+
+    if (!liveClasses || liveClasses.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No live classes found for this user' 
+      });
+    }
+
+    // Format response
+    const responseData = liveClasses.map(cls => ({
+      _id: cls._id,
+      className: cls.className,
+      enrollmentIdRef: {
+        _id: cls.enrollmentIdRef?._id,
+        courseId: cls.enrollmentIdRef?.courseId || null
+      },
+      mentorId: cls.mentorId ? {
+        _id: cls.mentorId._id,
+        firstName: cls.mentorId.firstName,
+        lastName: cls.mentorId.lastName,
+        email: cls.mentorId.email,
+        expertise: cls.mentorId.expertise,
+        subjects: cls.mentorId.subjects
+      } : null,
+      subjectName: cls.subjectName,
+      date: cls.date,
+      timing: cls.timing,
+      link: cls.link,
+      createdAt: cls.createdAt,
+      updatedAt: cls.updatedAt
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: 'Live classes fetched successfully',
+      data: responseData
+    });
+
+  } catch (error) {
+    console.error('Error fetching live classes by userId:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
 // GET LIVE CLASS BY ID
 exports.getLiveClassById = async (req, res) => {
   try {

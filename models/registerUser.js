@@ -6,7 +6,8 @@ const userRegisterSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phoneNumber: { type: String, required: true, unique: true },
   password: { type: String },
-  enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Enrollment" }] // <-- add this
+  enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Enrollment" }], // <-- add this
+  recommendedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }] // <-- add this
 }, { timestamps: true });
 
 

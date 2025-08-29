@@ -2,6 +2,9 @@ const bcrypt = require('bcryptjs');
 const UserRegister = require('../models/registerUser');  // Correct reference
 const generateToken = require('../config/token');
 const Enrollment = require('../models/enrollment');
+const {Course} = require('../models/coursesModel');
+const mongoose = require('mongoose'); 
+
 
 // REGISTER USER
 exports.register = async (req, res) => {
@@ -129,6 +132,77 @@ exports.deleteUser = async (req, res) => {
     res.status(200).json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// Add recommended courses to a user
+exports.addRecommendedCourses = async (req, res) => {
+try {
+    const { userId, courseIds } = req.body; // courseIds: array of ObjectIds
+
+    if (!userId || !Array.isArray(courseIds) || courseIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'userId and non-empty courseIds[] required' });
+    }
+
+    // Validate ObjectIds
+    const badIds = courseIds.filter(id => !mongoose.Types.ObjectId.isValid(id));
+    if (!mongoose.Types.ObjectId.isValid(userId) || badIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid ObjectId(s): ${[
+          !mongoose.Types.ObjectId.isValid(userId) ? userId : null,
+          ...badIds
+        ].filter(Boolean).join(', ')}`
+      });
+    }
+
+    // Ensure all courses exist
+    const foundIds = await Course.find({ _id: { $in: courseIds } }).distinct('_id');
+    const missing = courseIds.filter(id => !foundIds.map(String).includes(String(id)));
+    if (missing.length) {
+      return res.status(404).json({ success: false, message: `Courses not found: ${missing.join(', ')}` });
+    }
+
+    // Add without duplicates
+    const user = await UserRegister.findByIdAndUpdate(
+      userId,
+      { $addToSet: { recommendedCourses: { $each: courseIds } } },
+      { new: true }
+    ).populate('recommendedCourses');
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Recommended courses updated',
+      data: user.recommendedCourses
+    });
+  } catch (err) {
+    console.error('Error adding recommended courses:', err);
+    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  }
+};
+// Get recommended courses for a user
+exports.getRecommendedCourses = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await UserRegister.findById(userId)
+      .populate('recommendedCourses');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Recommended courses fetched successfully",
+      data: user.recommendedCourses
+    });
+
+  } catch (error) {
+    console.error("Error fetching recommended courses:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
