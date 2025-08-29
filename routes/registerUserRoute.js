@@ -16,10 +16,17 @@ router.put('/userregister/:id',users.updateUser);
 // Delete
 router.delete('/userregister/:id', users.deleteUser);
 
-router.post("/liveclasses", liveClassController.createLiveClass);
-router.get("/liveclasses", liveClassController.getAllLiveClasses);
-router.get("/liveclasses/:id", liveClassController.getLiveClassById);
-router.put("/liveclasses/:id", liveClassController.updateLiveClass);
-router.delete("/liveclasses/:id", liveClassController.deleteLiveClass);
+
+// ➕ CREATE LIVE CLASS
+router.post('/liveclass', liveClassController.createLiveClass);
+router.get('/liveclass', liveClassController.getAllLiveClasses);
+router.get('/liveclass/:id', liveClassController.getLiveClassById);
+router.put('/liveclass/:id', liveClassController.updateLiveClassById);
+router.delete('/liveclass/:id', liveClassController.deleteLiveClassById);
+
+// Additional routes
+router.get('/liveclass/mentor/:mentorId', liveClassController.getLiveClassesByMentorId);
+router.get('/liveclass/enrollment/:enrollmentId', liveClassController.getLiveClassesByEnrollmentId);
+
 
 module.exports = router;

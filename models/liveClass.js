@@ -1,37 +1,44 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const liveClassSchema = new mongoose.Schema({
-  title: {
+const LiveClassSchema = new mongoose.Schema({
+  className: {
     type: String,
     required: true,
-    trim: true,
+    trim: true
+  },
+  enrollmentIdRef: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Enrollment',
+    required: true
+  },
+  subjectName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  courseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+    required: true
+  },
+  mentorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Mentor',
+    required: true
+  },
+  date: {
+    type: Date,
+    required: true
   },
   timing: {
     type: String,
-    required: true,
+    required: true // e.g., "10:00 AM - 11:00 AM"
   },
-  description: {
-    type: String,
-    trim: true,
-  },
-  duration: {
+  link: {
     type: String,
     required: true,
-  },
-  meetLink: {
-    type: String,
-    required: true,
-  },
-  mentorName: {
-    type: String,
-    required: true,
-  },
-  course: {
-    type: String,
-    required: true,
+    trim: true
   }
-}, {
-  timestamps: true
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model("LiveClass", liveClassSchema);
+module.exports = mongoose.model('LiveClass', LiveClassSchema);

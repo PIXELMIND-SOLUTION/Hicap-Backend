@@ -407,7 +407,7 @@ exports.getEnrollmentsByUserId = async (req, res) => {
 
 exports.addMentorToEnrollment = async (req, res) => {
   try {
-    const { enrollmentId, mentorId } = req.body;
+    const { enrollmentId, mentorId, subjects } = req.body; // <-- subjects array added
 
     // Validate mentor
     const mentor = await Mentor.findById(mentorId);
@@ -418,15 +418,10 @@ exports.addMentorToEnrollment = async (req, res) => {
     if (!enrollment) return res.status(404).json({ success: false, message: "Enrollment not found" });
 
     // Initialize arrays if they don't exist
-    if (!enrollment.assignedMentors) {
-      enrollment.assignedMentors = [];
-    }
-    if (!mentor.enrolledBatches) {
-      mentor.enrolledBatches = [];
-    }
-    if (!mentor.assignedCourses) {
-      mentor.assignedCourses = [];
-    }
+    if (!enrollment.assignedMentors) enrollment.assignedMentors = [];
+    if (!mentor.enrolledBatches) mentor.enrolledBatches = [];
+    if (!mentor.assignedCourses) mentor.assignedCourses = [];
+    if (!mentor.subjects) mentor.subjects = []; // <-- make sure it's initialized
 
     // Add mentor to enrollment if not already assigned
     if (!enrollment.assignedMentors.includes(mentorId)) {
@@ -444,6 +439,15 @@ exports.addMentorToEnrollment = async (req, res) => {
       mentor.assignedCourses.push(enrollmentId);
     }
 
+    // Add subjects to mentor (avoid duplicates)
+    if (Array.isArray(subjects) && subjects.length > 0) {
+      subjects.forEach(sub => {
+        if (!mentor.subjects.includes(sub)) {
+          mentor.subjects.push(sub);
+        }
+      });
+    }
+
     await mentor.save();
 
     // Populate mentor and enrollment info for response
@@ -452,7 +456,7 @@ exports.addMentorToEnrollment = async (req, res) => {
       .populate('assignedCourses', 'batchNumber batchName startDate timings duration category');
 
     const updatedEnrollment = await Enrollment.findById(enrollmentId)
-      .populate('assignedMentors', 'firstName lastName email phoneNumber expertise');
+      .populate('assignedMentors', 'firstName lastName email phoneNumber expertise subjects');
 
     res.status(200).json({
       success: true,
@@ -464,6 +468,7 @@ exports.addMentorToEnrollment = async (req, res) => {
           email: updatedMentor.email,
           phoneNumber: updatedMentor.phoneNumber,
           expertise: updatedMentor.expertise,
+          subjects: updatedMentor.subjects, // <-- include subjects in response
           enrolledBatches: updatedMentor.enrolledBatches,
           assignedCourses: updatedMentor.assignedCourses
         },
@@ -481,6 +486,45 @@ exports.addMentorToEnrollment = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+
+
+// Remove mentor from enrollment
+exports.removeMentorFromEnrollment = async (req, res) => {
+   try {
+    const { enrollmentId, mentorId } = req.body;
+
+    const enrollment = await Enrollment.findById(enrollmentId);
+    const mentor = await Mentor.findById(mentorId);
+
+    if (!enrollment || !mentor) {
+      return res.status(404).json({ success: false, message: "Enrollment or Mentor not found" });
+    }
+
+    enrollment.assignedMentors = enrollment.assignedMentors.filter(
+      id => id.toString() !== mentorId
+    );
+
+    mentor.enrolledBatches = mentor.enrolledBatches.filter(
+      id => id.toString() !== enrollmentId
+    );
+    mentor.assignedCourses = mentor.assignedCourses.filter(
+      id => id.toString() !== enrollmentId
+    );
+
+    await enrollment.save();
+    await mentor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Mentor removed from enrollment successfully",
+      mentorSubjects: mentor.subjects || [] // <-- returning updated subjects
+    });
+
+  } catch (error) {
+    console.error("Error removing mentor:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
 exports.getEnrollmentsByMentorId = async (req, res) => {
   try {
     const { mentorId } = req.params;
@@ -490,30 +534,16 @@ exports.getEnrollmentsByMentorId = async (req, res) => {
         path: 'enrolledBatches',
         select: 'batchNumber batchName startDate timings duration category courseId enrolledUsers',
         populate: [
-          {
-            path: 'courseId',
-            select: 'title description price duration level'
-          },
-          {
-            path: 'enrolledUsers',
-            model: 'userRegister', // Fixed model name
-            select: 'firstName lastName email phoneNumber'
-          }
+          { path: 'courseId', select: 'title description price duration level' },
+          { path: 'enrolledUsers', model: 'userRegister', select: 'firstName lastName email phoneNumber' }
         ]
       })
       .populate({
         path: 'assignedCourses',
         select: 'batchNumber batchName startDate timings duration category courseId enrolledUsers',
         populate: [
-          {
-            path: 'courseId',
-            select: 'title description price duration level'
-          },
-          {
-            path: 'enrolledUsers',
-            model: 'userRegister', // Fixed model name
-            select: 'firstName lastName email phoneNumber'
-          }
+          { path: 'courseId', select: 'title description price duration level' },
+          { path: 'enrolledUsers', model: 'userRegister', select: 'firstName lastName email phoneNumber' }
         ]
       });
 
@@ -528,7 +558,8 @@ exports.getEnrollmentsByMentorId = async (req, res) => {
         fullName: `${mentor.firstName} ${mentor.lastName}`,
         email: mentor.email,
         phoneNumber: mentor.phoneNumber,
-        expertise: mentor.expertise
+        expertise: mentor.expertise,
+        subjects: mentor.subjects || []  // <-- added subjects
       },
       enrolledBatches: mentor.enrolledBatches,
       assignedCourses: mentor.assignedCourses,
@@ -546,52 +577,13 @@ exports.getEnrollmentsByMentorId = async (req, res) => {
   }
 };
 
-// Remove mentor from enrollment
-exports.removeMentorFromEnrollment = async (req, res) => {
-  try {
-    const { enrollmentId, mentorId } = req.body;
-
-    const enrollment = await Enrollment.findById(enrollmentId);
-    const mentor = await Mentor.findById(mentorId);
-
-    if (!enrollment || !mentor) {
-      return res.status(404).json({ success: false, message: "Enrollment or Mentor not found" });
-    }
-
-    // Remove mentor from enrollment
-    enrollment.assignedMentors = enrollment.assignedMentors.filter(
-      id => id.toString() !== mentorId
-    );
-
-    // Remove enrollment from mentor
-    mentor.enrolledBatches = mentor.enrolledBatches.filter(
-      id => id.toString() !== enrollmentId
-    );
-    mentor.assignedCourses = mentor.assignedCourses.filter(
-      id => id.toString() !== enrollmentId
-    );
-
-    await enrollment.save();
-    await mentor.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Mentor removed from enrollment successfully"
-    });
-
-  } catch (error) {
-    console.error("Error removing mentor:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
-  }
-};
-
 // Get all mentors for an enrollment
 exports.getEnrollmentMentors = async (req, res) => {
-  try {
+try {
     const { enrollmentId } = req.params;
 
     const enrollment = await Enrollment.findById(enrollmentId)
-      .populate('assignedMentors', 'firstName lastName email phoneNumber expertise');
+      .populate('assignedMentors', 'firstName lastName email phoneNumber expertise subjects'); // <-- include subjects
 
     if (!enrollment) {
       return res.status(404).json({ success: false, message: "Enrollment not found" });
@@ -620,17 +612,14 @@ exports.getAllMentorsWithBatches = async (req, res) => {
       .populate({
         path: 'enrolledBatches',
         select: 'batchNumber batchName startDate category',
-        populate: {
-          path: 'courseId',
-          select: 'title duration'
-        }
+        populate: { path: 'courseId', select: 'title duration' }
       })
       .populate({
         path: 'assignedCourses',
         select: 'batchNumber batchName',
         populate: {
           path: 'enrolledUsers',
-          model: 'userRegister', // ✅ Correct model name
+          model: 'userRegister',
           select: 'firstName lastName',
           options: { limit: 5 }
         }
@@ -638,7 +627,10 @@ exports.getAllMentorsWithBatches = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: mentors,
+      data: mentors.map(m => ({
+        ...m.toObject(),
+        subjects: m.subjects || [] // <-- added subjects in output
+      })),
       totalMentors: mentors.length
     });
 
@@ -647,7 +639,6 @@ exports.getAllMentorsWithBatches = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
-
 // Get specific mentor with detailed batch info
 exports.getMentorWithDetailedBatches = async (req, res) => {
   try {
@@ -659,15 +650,8 @@ exports.getMentorWithDetailedBatches = async (req, res) => {
         path: 'enrolledBatches',
         select: 'batchNumber batchName startDate timings duration category courseId enrolledUsers',
         populate: [
-          {
-            path: 'courseId',
-            select: 'title description price duration level'
-          },
-          {
-            path: 'enrolledUsers',
-            model: 'userRegister', // ✅ Correct model name
-            select: 'firstName lastName email phoneNumber'
-          }
+          { path: 'courseId', select: 'title description price duration level' },
+          { path: 'enrolledUsers', model: 'userRegister', select: 'firstName lastName email phoneNumber' }
         ]
       });
 
@@ -683,6 +667,7 @@ exports.getMentorWithDetailedBatches = async (req, res) => {
         email: mentor.email,
         phoneNumber: mentor.phoneNumber,
         expertise: mentor.expertise,
+        subjects: mentor.subjects || [], // <-- include subjects
         createdAt: mentor.createdAt,
         updatedAt: mentor.updatedAt
       },

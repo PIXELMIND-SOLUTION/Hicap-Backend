@@ -7,6 +7,7 @@ const mentorSchema = new mongoose.Schema({
   phoneNumber: { type: String, required: true, unique: true },
   password: { type: String },
   expertise: { type: String }, // Add expertise area
+  subjects: [String],
   assignedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Enrollment" }],
   enrolledBatches: [{ type: mongoose.Schema.Types.ObjectId, ref: "Enrollment" }] // NEW: Track batches mentor is enrolled in
 }, { timestamps: true });

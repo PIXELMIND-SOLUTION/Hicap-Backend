@@ -9,33 +9,32 @@ const enrollmentSchema = new mongoose.Schema({
   timings: { type: String, required: true },
   duration: { type: String, required: true },
   category: { type: String, required: true },
-assignedMentors: [{ 
+  assignedMentors: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "Mentor"
-  }],   enrolledUsers: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "UserRegister" } // Users enrolled in this batch
+  }],
+  enrolledUsers: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "userRegister" }
   ]
 }, { timestamps: true });
 
-
+// Certificate Schema
 const certificateSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'userRegister', required: true },
-  enrollment: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment', required: true },
-  status: {
-    image: { type: String, required: true },
-    type: { type: String, enum: ['Completed', 'Pending'], required: true }
-  }
-});
-
-const certificateWrapperSchema = new mongoose.Schema({
-  certificates: [certificateSchema]
+  certificates: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'userRegister' },
+    enrollment: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment' },
+    status: {
+      image: { type: String },
+      type: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' }
+    }
+  }]
 }, { timestamps: true });
 
-// Create models
+// Make sure you're exporting both models correctly
 const Enrollment = mongoose.model('Enrollment', enrollmentSchema);
-const Certificate = mongoose.model('Certificate', certificateWrapperSchema);
+const Certificate = mongoose.model('Certificate', certificateSchema);
 
-// Export models
+// Export both models
 module.exports = {
   Enrollment,
   Certificate
