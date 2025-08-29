@@ -96,9 +96,7 @@ exports.createCourseModule = async (req, res) => {
 exports.getAllCourseModules = async (req, res) => {
   try {
     const courseModules = await CourseModule.find()
-      .populate("enrolledId")
-      .populate("courseId")
-      .populate("mentorId");
+      .populate("enrolledId");
     
     res.status(200).json({
       success: true,
@@ -123,8 +121,7 @@ exports.getCourseModuleById = async (req, res) => {
     
     const courseModule = await CourseModule.findById(id)
       .populate("enrolledId")
-      .populate("courseId")
-      .populate("mentorId");
+    
     
     if (!courseModule) {
       return res.status(404).json({
@@ -155,8 +152,7 @@ exports.getCourseModulesByEnrolledId = async (req, res) => {
     
     const courseModules = await CourseModule.find({ enrolledId })
       .populate("enrolledId")
-      .populate("courseId")
-      .populate("mentorId");
+     
     
     if (!courseModules || courseModules.length === 0) {
       return res.status(404).json({
@@ -193,8 +189,8 @@ exports.getCourseModulesByUserId = async (req, res) => {
     
     if (!enrollments || enrollments.length === 0) {
       return res.status(404).json({
-        success: false,
-        message: "No enrollments found for this user"
+        success:true,
+        message: []
       });
     }
     
@@ -206,8 +202,7 @@ exports.getCourseModulesByUserId = async (req, res) => {
       enrolledId: { $in: enrollmentIds } 
     })
       .populate("enrolledId")
-      .populate("courseId")
-      .populate("mentorId");
+ 
     
     if (!courseModules || courseModules.length === 0) {
       return res.status(404).json({
@@ -260,8 +255,7 @@ exports.updateCourseModuleById = async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate("enrolledId")
-      .populate("courseId")
-      .populate("mentorId");
+     
     
     res.status(200).json({
       success: true,

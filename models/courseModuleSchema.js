@@ -14,12 +14,12 @@ const lessonSchema = new mongoose.Schema({
 });
 
 const topicSchema = new mongoose.Schema({
-  subjectName: { type: String, required: true },
+  topicName: { type: String, required: true },
   lessons: [lessonSchema]
 });
 
 const moduleSchema = new mongoose.Schema({
-  moduleName: { type: String, required: true },
+  subjectName: { type: String, required: true },
   topics: [topicSchema]
 });
 
