@@ -11,14 +11,14 @@ router.post('/mentor/register', mentorController.registerMentor);
 router.post('/mentor/login', mentorController.loginMentor);
 
 // READ
-router.get('/mentor', mentorController.getAllMentors);
-router.get('/mentor/:id', mentorController.getMentorById);
+router.get('/mentors', mentorController.getAll);
+router.get('/mentor/:id', mentorController.getById);
 
 // UPDATE
-router.put('/mentor/:id', mentorController.updateMentor);
+router.put('/mentor/:id', mentorController.update);
 
 // DELETE
-router.delete('/mentor/:id', mentorController.deleteMentor);
+router.delete('/mentor/:id', mentorController.delete);
 
 
 // 🔥 EXPERIENCE ROUTES - define FIRST to avoid :id conflicts
@@ -29,7 +29,7 @@ router.put("/experience/:id", upload.single("image"), mentorController.updateMen
 router.delete("/experience/:id", mentorController.deleteMentorExperience);
 
 // 🔧 OUR MENTOR ROUTES - define AFTER specific routes
-router.post("Mentor/", upload.single("image"), mentorController.createMentor);
+router.post("/Mentor", upload.single("image"), mentorController.createMentor);
 router.get("/Mentor", mentorController.getAllMentors);
 router.get("/Mentor/:id", mentorController.getMentorById);
 router.put("/Mentor/:id", upload.single("image"), mentorController.updateMentor);

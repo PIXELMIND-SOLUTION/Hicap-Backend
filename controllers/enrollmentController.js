@@ -3,6 +3,7 @@ const { uploadImage, uploadToCloudinary } = require('../config/cloudinary');
 const mongoose = require('mongoose');
 const userRegister = require("../models/registerUser"); 
 const {Course} = require("../models/coursesModel");
+const { OurMentor, MentorExperience ,Mentor} = require("../models/ourMentors");
 
 
 // ➕ Create new enrollment
@@ -404,12 +405,193 @@ exports.getEnrollmentsByUserId = async (req, res) => {
   }
 };
 
-// 📋 Get all users in an enrollment
-exports.getUsersByEnrollmentId = async (req, res) => {
+exports.addMentorToEnrollment = async (req, res) => {
+  try {
+    const { enrollmentId, mentorId } = req.body;
+
+    // Validate mentor
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) return res.status(404).json({ success: false, message: "Mentor not found" });
+
+    // Validate enrollment
+    const enrollment = await Enrollment.findById(enrollmentId);
+    if (!enrollment) return res.status(404).json({ success: false, message: "Enrollment not found" });
+
+    // Initialize arrays if they don't exist
+    if (!enrollment.assignedMentors) {
+      enrollment.assignedMentors = [];
+    }
+    if (!mentor.enrolledBatches) {
+      mentor.enrolledBatches = [];
+    }
+    if (!mentor.assignedCourses) {
+      mentor.assignedCourses = [];
+    }
+
+    // Add mentor to enrollment if not already assigned
+    if (!enrollment.assignedMentors.includes(mentorId)) {
+      enrollment.assignedMentors.push(mentorId);
+      await enrollment.save();
+    }
+
+    // Add enrollment to mentor's enrolledBatches if not already there
+    if (!mentor.enrolledBatches.includes(enrollmentId)) {
+      mentor.enrolledBatches.push(enrollmentId);
+    }
+
+    // Add enrollment to mentor's assignedCourses if not already there
+    if (!mentor.assignedCourses.includes(enrollmentId)) {
+      mentor.assignedCourses.push(enrollmentId);
+    }
+
+    await mentor.save();
+
+    // Populate mentor and enrollment info for response
+    const updatedMentor = await Mentor.findById(mentorId)
+      .populate('enrolledBatches', 'batchNumber batchName startDate timings duration category')
+      .populate('assignedCourses', 'batchNumber batchName startDate timings duration category');
+
+    const updatedEnrollment = await Enrollment.findById(enrollmentId)
+      .populate('assignedMentors', 'firstName lastName email phoneNumber expertise');
+
+    res.status(200).json({
+      success: true,
+      message: "Mentor added to enrollment successfully",
+      data: {
+        mentor: {
+          _id: updatedMentor._id,
+          fullName: `${updatedMentor.firstName} ${updatedMentor.lastName}`,
+          email: updatedMentor.email,
+          phoneNumber: updatedMentor.phoneNumber,
+          expertise: updatedMentor.expertise,
+          enrolledBatches: updatedMentor.enrolledBatches,
+          assignedCourses: updatedMentor.assignedCourses
+        },
+        enrollment: {
+          _id: updatedEnrollment._id,
+          batchNumber: updatedEnrollment.batchNumber,
+          batchName: updatedEnrollment.batchName,
+          assignedMentors: updatedEnrollment.assignedMentors
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error("Error adding mentor:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+exports.getEnrollmentsByMentorId = async (req, res) => {
+  try {
+    const { mentorId } = req.params;
+
+    const mentor = await Mentor.findById(mentorId)
+      .populate({
+        path: 'enrolledBatches',
+        select: 'batchNumber batchName startDate timings duration category courseId enrolledUsers',
+        populate: [
+          {
+            path: 'courseId',
+            select: 'title description price duration level'
+          },
+          {
+            path: 'enrolledUsers',
+            model: 'userRegister', // Fixed model name
+            select: 'firstName lastName email phoneNumber'
+          }
+        ]
+      })
+      .populate({
+        path: 'assignedCourses',
+        select: 'batchNumber batchName startDate timings duration category courseId enrolledUsers',
+        populate: [
+          {
+            path: 'courseId',
+            select: 'title description price duration level'
+          },
+          {
+            path: 'enrolledUsers',
+            model: 'userRegister', // Fixed model name
+            select: 'firstName lastName email phoneNumber'
+          }
+        ]
+      });
+
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      mentor: {
+        _id: mentor._id,
+        fullName: `${mentor.firstName} ${mentor.lastName}`,
+        email: mentor.email,
+        phoneNumber: mentor.phoneNumber,
+        expertise: mentor.expertise
+      },
+      enrolledBatches: mentor.enrolledBatches,
+      assignedCourses: mentor.assignedCourses,
+      stats: {
+        totalBatches: mentor.enrolledBatches.length,
+        totalAssignedCourses: mentor.assignedCourses.length,
+        totalStudents: mentor.assignedCourses.reduce((total, course) => 
+          total + (course.enrolledUsers ? course.enrolledUsers.length : 0), 0)
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching mentor's courses:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// Remove mentor from enrollment
+exports.removeMentorFromEnrollment = async (req, res) => {
+  try {
+    const { enrollmentId, mentorId } = req.body;
+
+    const enrollment = await Enrollment.findById(enrollmentId);
+    const mentor = await Mentor.findById(mentorId);
+
+    if (!enrollment || !mentor) {
+      return res.status(404).json({ success: false, message: "Enrollment or Mentor not found" });
+    }
+
+    // Remove mentor from enrollment
+    enrollment.assignedMentors = enrollment.assignedMentors.filter(
+      id => id.toString() !== mentorId
+    );
+
+    // Remove enrollment from mentor
+    mentor.enrolledBatches = mentor.enrolledBatches.filter(
+      id => id.toString() !== enrollmentId
+    );
+    mentor.assignedCourses = mentor.assignedCourses.filter(
+      id => id.toString() !== enrollmentId
+    );
+
+    await enrollment.save();
+    await mentor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Mentor removed from enrollment successfully"
+    });
+
+  } catch (error) {
+    console.error("Error removing mentor:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// Get all mentors for an enrollment
+exports.getEnrollmentMentors = async (req, res) => {
   try {
     const { enrollmentId } = req.params;
 
-    const enrollment = await Enrollment.findById(enrollmentId).populate('enrolledUsers', 'fullName email');
+    const enrollment = await Enrollment.findById(enrollmentId)
+      .populate('assignedMentors', 'firstName lastName email phoneNumber expertise');
 
     if (!enrollment) {
       return res.status(404).json({ success: false, message: "Enrollment not found" });
@@ -417,20 +599,111 @@ exports.getUsersByEnrollmentId = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      enrollment: {
-        _id: enrollment._id,
-        batchNumber: enrollment.batchNumber,
+      data: {
+        enrollmentId: enrollment._id,
         batchName: enrollment.batchName,
-        startDate: enrollment.startDate,
-        timings: enrollment.timings,
-        duration: enrollment.duration,
-      },
-
-      enrolledUsers: enrollment.enrolledUsers,
-      userCount: enrollment.enrolledUsers.length
+        assignedMentors: enrollment.assignedMentors
+      }
     });
+
   } catch (error) {
-    console.error("Error fetching enrolled users:", error);
+    console.error("Error fetching enrollment mentors:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// Get all mentors with their batch information
+exports.getAllMentorsWithBatches = async (req, res) => {
+  try {
+    const mentors = await Mentor.find()
+      .select('-password')
+      .populate({
+        path: 'enrolledBatches',
+        select: 'batchNumber batchName startDate category',
+        populate: {
+          path: 'courseId',
+          select: 'title duration'
+        }
+      })
+      .populate({
+        path: 'assignedCourses',
+        select: 'batchNumber batchName',
+        populate: {
+          path: 'enrolledUsers',
+          model: 'userRegister', // ✅ Correct model name
+          select: 'firstName lastName',
+          options: { limit: 5 }
+        }
+      });
+
+    res.status(200).json({
+      success: true,
+      data: mentors,
+      totalMentors: mentors.length
+    });
+
+  } catch (error) {
+    console.error("Error fetching mentors:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// Get specific mentor with detailed batch info
+exports.getMentorWithDetailedBatches = async (req, res) => {
+  try {
+    const { mentorId } = req.params;
+
+    const mentor = await Mentor.findById(mentorId)
+      .select('-password')
+      .populate({
+        path: 'enrolledBatches',
+        select: 'batchNumber batchName startDate timings duration category courseId enrolledUsers',
+        populate: [
+          {
+            path: 'courseId',
+            select: 'title description price duration level'
+          },
+          {
+            path: 'enrolledUsers',
+            model: 'userRegister', // ✅ Correct model name
+            select: 'firstName lastName email phoneNumber'
+          }
+        ]
+      });
+
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      mentor: {
+        _id: mentor._id,
+        fullName: `${mentor.firstName} ${mentor.lastName}`,
+        email: mentor.email,
+        phoneNumber: mentor.phoneNumber,
+        expertise: mentor.expertise,
+        createdAt: mentor.createdAt,
+        updatedAt: mentor.updatedAt
+      },
+      teachingSchedule: mentor.enrolledBatches.map(batch => ({
+        batchNumber: batch.batchNumber,
+        batchName: batch.batchName,
+        startDate: batch.startDate,
+        timings: batch.timings,
+        duration: batch.duration,
+        studentsCount: batch.enrolledUsers ? batch.enrolledUsers.length : 0,
+        category: batch.category
+      })),
+      performanceMetrics: {
+        totalBatches: mentor.enrolledBatches.length,
+        totalStudents: mentor.enrolledBatches.reduce((total, batch) =>
+          total + (batch.enrolledUsers ? batch.enrolledUsers.length : 0), 0)
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching mentor details:", error);
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };

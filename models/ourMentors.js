@@ -7,7 +7,8 @@ const mentorSchema = new mongoose.Schema({
   phoneNumber: { type: String, required: true, unique: true },
   password: { type: String },
   expertise: { type: String }, // Add expertise area
-  assignedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Enrollment" }]
+  assignedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Enrollment" }],
+  enrolledBatches: [{ type: mongoose.Schema.Types.ObjectId, ref: "Enrollment" }] // NEW: Track batches mentor is enrolled in
 }, { timestamps: true });
 
 // OurMentor Schema
@@ -28,7 +29,7 @@ const mentorExperienceSchema = new mongoose.Schema({
 // Export both models
 const OurMentor = mongoose.model("OurMentor", ourMentorSchema);
 const MentorExperience = mongoose.model("MentorExperience", mentorExperienceSchema);
-const Mentor= mongoose.model('Mentor', mentorSchema);
+const Mentor = mongoose.model('Mentor', mentorSchema);
 
 module.exports = {
   OurMentor,

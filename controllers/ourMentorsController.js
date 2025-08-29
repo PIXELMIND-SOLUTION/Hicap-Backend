@@ -3,14 +3,13 @@ const { uploadImage } = require("../config/cloudinary");
 const bcrypt = require('bcryptjs');
 const generateToken = require('../config/token');
 const Enrollment = require('../models/enrollment');
-
-
+const mongoose = require('mongoose'); 
 
 
 // REGISTER MENTOR
 exports.registerMentor = async (req, res) => {
   try {
-    const { firstName, lastName, email, phoneNumber, password, confirmpassword, expertise } = req.body;
+    const { firstName, lastName, email, phoneNumber, password, confirmpassword, expertise, assignedCourses } = req.body;
 
     if (!firstName || !lastName || !email || !phoneNumber || !password || !confirmpassword) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
@@ -33,7 +32,8 @@ exports.registerMentor = async (req, res) => {
       email,
       phoneNumber,
       password: hashedPassword,
-      expertise
+      expertise,
+      assignedCourses
     });
 
     res.status(201).json({
@@ -45,6 +45,7 @@ exports.registerMentor = async (req, res) => {
         email: newMentor.email,
         phoneNumber: newMentor.phoneNumber,
         token: generateToken(newMentor._id),
+        assignedCourses: newMentor.assignedCourses
       },
     });
 
@@ -77,6 +78,7 @@ exports.loginMentor = async (req, res) => {
         email: mentor.email,
         phoneNumber: mentor.phoneNumber,
         token: generateToken(mentor._id),
+        assignedCourses: mentor.assignedCourses
       },
     });
 
@@ -86,9 +88,20 @@ exports.loginMentor = async (req, res) => {
 };
 
 // GET ALL MENTORS
-exports.getAllMentors = async (req, res) => {
+exports.getAll = async (req, res) => {
   try {
-    const mentors = await Mentor.find().select('-password');
+    // Populate assignedCourses
+    const mentors = await Mentor.find()
+      .select('-password')
+      .populate({
+        path: 'assignedCourses', // populate assignedCourses
+        populate: {
+          path: 'enrolledUsers', // populate enrolledUsers inside each course
+          model: 'userRegister', // reference to user model
+          select: 'firstName lastName email phoneNumber' // only required fields
+        }
+      });
+
     res.status(200).json({ success: true, data: mentors });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
@@ -96,10 +109,21 @@ exports.getAllMentors = async (req, res) => {
 };
 
 // GET MENTOR BY ID
-exports.getMentorById = async (req, res) => {
+exports.getById = async (req, res) => {
   try {
-    const mentor = await Mentor.findById(req.params.id).select('-password');
+    const mentor = await Mentor.findById(req.params.id)
+      .select('-password')
+      .populate({
+        path: 'assignedCourses',
+        populate: {
+          path: 'enrolledUsers',
+          model: 'userRegister',
+          select: 'firstName lastName email phoneNumber'
+        }
+      });
+
     if (!mentor) return res.status(404).json({ success: false, message: 'Mentor not found' });
+
     res.status(200).json({ success: true, data: mentor });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
@@ -107,15 +131,24 @@ exports.getMentorById = async (req, res) => {
 };
 
 // UPDATE MENTOR
-exports.updateMentor = async (req, res) => {
+exports.update = async (req, res) => {
   try {
-    const { firstName, lastName, email, phoneNumber, expertise } = req.body;
+    const { firstName, lastName, email, phoneNumber, expertise, assignedCourses } = req.body;
 
     const mentor = await Mentor.findByIdAndUpdate(
       req.params.id,
-      { firstName, lastName, email, phoneNumber, expertise },
+      { firstName, lastName, email, phoneNumber, expertise, assignedCourses },
       { new: true }
-    ).select('-password');
+    )
+    .select('-password')
+    .populate({
+      path: 'assignedCourses',
+      populate: {
+        path: 'enrolledUsers',
+        model: 'userRegister',
+        select: 'firstName lastName email phoneNumber'
+      }
+    });
 
     if (!mentor) return res.status(404).json({ success: false, message: 'Mentor not found' });
 
@@ -126,12 +159,21 @@ exports.updateMentor = async (req, res) => {
 };
 
 // DELETE MENTOR
-exports.deleteMentor = async (req, res) => {
+exports.delete= async (req, res) => {
   try {
-    const mentor = await Mentor.findByIdAndDelete(req.params.id);
+    const mentor = await Mentor.findByIdAndDelete(req.params.id)
+      .populate({
+        path: 'assignedCourses',
+        populate: {
+          path: 'enrolledUsers',
+          model: 'userRegister',
+          select: 'firstName lastName email phoneNumber'
+        }
+      });
+
     if (!mentor) return res.status(404).json({ success: false, message: 'Mentor not found' });
 
-    res.status(200).json({ success: true, message: 'Mentor deleted successfully' });
+    res.status(200).json({ success: true, message: 'Mentor deleted successfully', data: mentor });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }

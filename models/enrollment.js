@@ -9,11 +9,13 @@ const enrollmentSchema = new mongoose.Schema({
   timings: { type: String, required: true },
   duration: { type: String, required: true },
   category: { type: String, required: true },
-  enrolledUsers: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "userRegister" }
+assignedMentors: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Mentor"
+  }],   enrolledUsers: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "UserRegister" } // Users enrolled in this batch
   ]
 }, { timestamps: true });
-
 
 
 const certificateSchema = new mongoose.Schema({
