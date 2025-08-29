@@ -1,22 +1,35 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const topicSchema = new mongoose.Schema({
-  topic: String,
-  duration: String,
-  date: Date,
-  link: String,
+const resourceSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  file: { type: String, required: true } // Cloudinary PDF URL
 });
 
-const moduleSchema = new mongoose.Schema({}, { strict: false });
+const lessonSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  date: { type: Date, required: true },
+  videoId: { type: String, required: true }, // YouTube video ID as string
+  duration: { type: String }, // auto-fetched
+  resources: [resourceSchema]
+});
 
-const courseModuleSchema = new mongoose.Schema(
-  {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'userRegister', required: true }, // 👈 added user reference
-    enrollment: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment', required: true },
-    course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
-    modules: [moduleSchema],
-  },
-  { timestamps: true }
-);
+const topicSchema = new mongoose.Schema({
+  subjectName: { type: String, required: true },
+  lessons: [lessonSchema]
+});
 
-module.exports = mongoose.model('CourseModule', courseModuleSchema);
+const moduleSchema = new mongoose.Schema({
+  moduleName: { type: String, required: true },
+  topics: [topicSchema]
+});
+
+const courseModuleSchema = new mongoose.Schema({
+  enrolledId: { type: mongoose.Schema.Types.ObjectId, ref: "Enrollment", required: true },
+  courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
+  courseName: { type: String },
+  mentorId: { type: mongoose.Schema.Types.ObjectId, ref: "Mentor"},
+  mentorName: { type: String },
+  modules: [moduleSchema]
+}, { timestamps: true });
+
+module.exports = mongoose.model("CourseModule", courseModuleSchema);

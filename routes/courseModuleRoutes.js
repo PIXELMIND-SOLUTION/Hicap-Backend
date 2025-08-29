@@ -1,21 +1,28 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const courseModuleController = require('../controllers/coursemodulecontroller');
+const multer = require("multer");
+const upload = multer(); // memory storage
+const courseModuleController = require("../controllers/coursemodulecontroller");
 
-// CREATE
-router.post('/courseModule', courseModuleController.createCourseModule);
+router.post("/course-modules", upload.array("files"), courseModuleController.createCourseModule);
+// Get all course modules
+router.get("/course-modules", courseModuleController.getAllCourseModules);
 
-// READ ALL
-router.get('/courseModule', courseModuleController.getAllCourseModules);
+// Get course module by ID
+router.get("/course-modules/:id", courseModuleController.getCourseModuleById);
 
-// READ BY ID
-router.get('/courseModule/:id', courseModuleController.getCourseModuleById);
+// Get course modules by enrolledId
+router.get("/course-modules/enrolled/:enrolledId", courseModuleController.getCourseModulesByEnrolledId);
 
-router.get('/courseModule/user/:userId', courseModuleController.getCourseModulesByUserId);
+// Get course modules by userId
+router.get("/course-modules/user/:userId", courseModuleController.getCourseModulesByUserId);
 
-// UPDATE
-router.put('/courseModule/:id', courseModuleController.updateCourseModuleById);
+// Update course module by ID
+router.put("/course-modules/:id", upload.array("files"), courseModuleController.updateCourseModuleById);
 
-// DELETE
-router.delete('/courseModule/:id', courseModuleController.deleteCourseModuleById);
+router.put("/course-modules/:moduleId/topics/:topicIndex/lessons/:lessonIndex", courseModuleController.updateLessonInModule);
+
+// Delete course module by ID
+router.delete("/course-modules/:id", courseModuleController.deleteCourseModuleById);
+
 module.exports = router;
