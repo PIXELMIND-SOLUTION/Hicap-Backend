@@ -1,5 +1,5 @@
 const { Enrollment } = require('../models/enrollment'); // Correct import
-const LiveClass = require('../models/LiveClass');
+const LiveClass = require('../models/liveClass');
 const { Mentor } = require('../models/ourMentors');
 const {Course} = require('../models/coursesModel');
 const mongoose =require("mongoose");
