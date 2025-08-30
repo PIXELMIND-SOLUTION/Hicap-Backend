@@ -12,7 +12,7 @@ const featureSchema = new mongoose.Schema({
 
 const reviewSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  rating: { type: Number, required: true },
+  rating: { type: String, required: true },
   content: { type: String, required: true },
   image: { type: String, required: true }  // REQUIRED!
 });
@@ -24,6 +24,8 @@ const courseSchema = new mongoose.Schema({
   category: { type: String, required: true },
   subcategory: { type: String, default: 'course' },
   duration: { type: String, required: true },
+   noOfLessons: { type: String, default: 0 }, 
+  noOfStudents: { type: String, default: 0 }, 
   faq: [faqSchema],
   features: [featureSchema],
   reviews: [reviewSchema],
