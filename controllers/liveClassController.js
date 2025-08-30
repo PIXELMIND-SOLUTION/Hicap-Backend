@@ -276,7 +276,7 @@ exports.getLiveClassesByUserId = async (req, res) => {
           select: 'name description'
         }
       })
-      .populate('mentorId', 'firstName lastName email expertise subjects')
+      // REMOVED .populate('mentorId', 'firstName lastName email expertise subjects')
       .select('-__v')
       .sort({ date: -1 });  // latest classes first
 
@@ -295,14 +295,7 @@ exports.getLiveClassesByUserId = async (req, res) => {
         _id: cls.enrollmentIdRef?._id,
         courseId: cls.enrollmentIdRef?.courseId || null
       },
-      mentorId: cls.mentorId ? {
-        _id: cls.mentorId._id,
-        firstName: cls.mentorId.firstName,
-        lastName: cls.mentorId.lastName,
-        email: cls.mentorId.email,
-        expertise: cls.mentorId.expertise,
-        subjects: cls.mentorId.subjects
-      } : null,
+      // mentorId is removed since it's not in schema
       subjectName: cls.subjectName,
       date: cls.date,
       timing: cls.timing,
@@ -326,7 +319,6 @@ exports.getLiveClassesByUserId = async (req, res) => {
     });
   }
 };
-
 // GET LIVE CLASS BY ID
 exports.getLiveClassById = async (req, res) => {
   try {
