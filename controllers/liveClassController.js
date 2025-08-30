@@ -271,12 +271,17 @@ exports.getLiveClassesByUserId = async (req, res) => {
     const liveClasses = await LiveClass.find({ enrollmentIdRef: { $in: enrollmentIds } })
       .populate({
         path: 'enrollmentIdRef',
-        populate: {
-          path: 'courseId',
-          select: 'name description'
-        }
+        populate: [
+          {
+            path: 'courseId',
+            select: 'name description'
+          },
+          {
+            path: 'assignedMentors',  // populate mentors here
+            select: 'firstName lastName email expertise subjects'
+          }
+        ]
       })
-      // REMOVED .populate('mentorId', 'firstName lastName email expertise subjects')
       .select('-__v')
       .sort({ date: -1 });  // latest classes first
 
@@ -293,9 +298,9 @@ exports.getLiveClassesByUserId = async (req, res) => {
       className: cls.className,
       enrollmentIdRef: {
         _id: cls.enrollmentIdRef?._id,
-        courseId: cls.enrollmentIdRef?.courseId || null
+        courseId: cls.enrollmentIdRef?.courseId || null,
+        assignedMentors: cls.enrollmentIdRef?.assignedMentors || []
       },
-      // mentorId is removed since it's not in schema
       subjectName: cls.subjectName,
       date: cls.date,
       timing: cls.timing,
