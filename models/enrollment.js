@@ -20,14 +20,14 @@ const enrollmentSchema = new mongoose.Schema({
 
 // Certificate Schema
 const certificateSchema = new mongoose.Schema({
-  certificates: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'userRegister' },
-    enrollment: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment' },
-    status: {
-      image: { type: String },
-      type: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' }
-    }
-  }]
+  enrolledId: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'userRegister', required: true },
+  certificateFile: { type: String, required: true }, // Cloudinary URL
+  status: { 
+    type: String, 
+    enum: ['Pending', 'Approved', 'Rejected'], 
+    default: 'Pending' 
+  }
 }, { timestamps: true });
 
 // Make sure you're exporting both models correctly

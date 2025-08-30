@@ -31,12 +31,33 @@ router.get('/mentor/:mentorId/details', enrollmentController.getMentorWithDetail
 
 
 
-// Certificate routes
-router.post("/certificate", upload.array("images"), enrollmentController.createCertificate);
-router.get("/certificates", enrollmentController.getAllCertificates);
-router.get("/certificate/user/:userId", enrollmentController.getCertificateByUserId);
-router.put("/certificate/user/:userId", upload.array("images"), enrollmentController.updateCertificateByUserId);
-router.delete("/certificate/user/:userId", enrollmentController.deleteCertificateByUserId);
-router.delete("/certificate/:id", enrollmentController.deleteCertificateById);
+// Create certificates for all users in enrollment (single file applies to all)
+router.post('/certificate', upload.single('certificateFile'), enrollmentController.createCertificate);
+
+// Get all certificates
+router.get('/certificates', enrollmentController.getAllCertificates);
+
+// Get certificates by user ID
+router.get('/certificate/user/:userId', enrollmentController.getCertificatesByUserId);
+
+// Get certificates by enrolledId
+router.get('/certificate/enrolled/:enrolledId', enrollmentController.getCertificatesByEnrolledId);
+
+// Update certificate by ID (file and/or status)
+router.put('/certificate/:id', enrollmentController.updateCertificateById);
+
+// Update all certificates for a user by status
+router.put('/certificate/user/:userId/status', enrollmentController.updateCertificateStatusByUserId);
+
+// Update all certificates for an enrollment by status
+router.put('/certificate/enrolled/:enrolledId/status', enrollmentController.updateCertificateStatusByEnrolledId);
+
+// Update certificate status
+router.put('/certificate/:id/status', enrollmentController.updateCertificateStatus);
+
+// Delete certificate
+router.delete('/certificate/:id', enrollmentController.deleteCertificate);
+
+
 
 module.exports = router;

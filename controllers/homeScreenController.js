@@ -14,7 +14,7 @@ exports.createOrUpdateHomeScreen = async (req, res) => {
     if (!Array.isArray(titles) || !Array.isArray(contents) || titles.length !== req.files.length || contents.length !== req.files.length) {
       return res.status(400).json({ success: false, message: "titles, contents, and images must have the same length" });
     }
-
+     
     // Upload images to Cloudinary
     const uploadedUrls = [];
     for (let i = 0; i < req.files.length; i++) {

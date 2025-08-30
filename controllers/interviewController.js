@@ -1,94 +1,140 @@
-const Interview = require("../models/interviewModel");
-const { uploadImage } = require("../config/cloudinary");
+const Interview = require('../models/interviewModel');  // adjust path
+const { Enrollment } = require('../models/enrollment');
+const User = require('../models/registerUser');
 
-// Create Interview
 exports.createInterview = async (req, res) => {
   try {
-    const { courseId, date, companyName, role, type, salary, content, link } = req.body;
+    const { enrolledId, companyName, role, experience, location } = req.body;
 
-    if (!courseId || !date || !companyName || !role || !type || !salary) {
-      return res.status(400).json({ success: false, message: "All required fields must be provided." });
+    // Find the enrollment and populate enrolled users
+    const enrollment = await Enrollment.findById(enrolledId).populate('enrolledUsers');
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: 'Enrollment not found' });
     }
 
-    let imageUrl = null;
-    if (req.file) {
-      imageUrl = await uploadImage(req.file.buffer); // You should implement uploadImage
+    if (!enrollment.enrolledUsers || enrollment.enrolledUsers.length === 0) {
+      return res.status(400).json({ success: false, message: 'No users enrolled in this batch' });
     }
 
-    const interview = await Interview.create({
-      courseId,
-      date,
-      companyName,
-      role,
-      type,
-      salary,
-      content,
-      link,
-      image: imageUrl
+    // Create interview for each enrolled user
+    const interviewDocs = [];
+    for (const user of enrollment.enrolledUsers) {
+      const interview = await Interview.create({
+        enrolledId,
+        companyName,
+        role,
+        experience,
+        location,
+        user: user._id
+      });
+
+      // Push interview ref into user model
+      user.interviews.push(interview._id);
+      await user.save();
+
+      interviewDocs.push(interview);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Interview(s) created successfully',
+      data: interviewDocs
     });
 
-    res.status(201).json({ success: true, message: "Interview created", data: interview });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Get All Interviews
+
+// GET ALL INTERVIEWS
 exports.getAllInterviews = async (req, res) => {
   try {
-    const interviews = await Interview.find().populate("courseId");
-    res.status(200).json({ success: true, data: interviews });
+    const interviews = await Interview.find()
+      .populate('user', 'firstName lastName email phoneNumber')
+      .populate('enrolledId', 'batchName batchNumber');
+    res.status(200).json({ success: true, count: interviews.length, data: interviews });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Get Interview by ID
+// GET INTERVIEW BY ID
 exports.getInterviewById = async (req, res) => {
   try {
-    const interview = await Interview.findById(req.params.id).populate("courseId");
+    const interview = await Interview.findById(req.params.id)
+      .populate('user', 'firstName lastName email phoneNumber')
+      .populate('enrolledId', 'batchName batchNumber');
     if (!interview) {
-      return res.status(404).json({ success: false, message: "Interview not found" });
+      return res.status(404).json({ success: false, message: 'Interview not found' });
     }
     res.status(200).json({ success: true, data: interview });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Update Interview
-exports.updateInterview = async (req, res) => {
+// GET INTERVIEWS BY ENROLLED ID
+exports.getInterviewsByEnrolledId = async (req, res) => {
   try {
-    const updateData = { ...req.body };
-
-    if (req.file) {
-      updateData.image = await uploadImage(req.file.buffer); // Optional image update
-    }
-
-    const updatedInterview = await Interview.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true
-    });
-
-    if (!updatedInterview) {
-      return res.status(404).json({ success: false, message: "Interview not found" });
-    }
-
-    res.status(200).json({ success: true, message: "Interview updated", data: updatedInterview });
+    const interviews = await Interview.find({ enrolledId: req.params.enrolledId })
+      .populate('user', 'firstName lastName email phoneNumber')
+      .populate('enrolledId', 'batchName batchNumber');
+    res.status(200).json({ success: true, count: interviews.length, data: interviews });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Delete Interview
-exports.deleteInterview = async (req, res) => {
+// GET INTERVIEWS BY USER ID
+exports.getInterviewsByUserId = async (req, res) => {
   try {
-    const deleted = await Interview.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ success: false, message: "Interview not found" });
-    }
-    res.status(200).json({ success: true, message: "Interview deleted" });
+    const interviews = await Interview.find({ user: req.params.userId })
+      .populate('user', 'firstName lastName email phoneNumber')
+      .populate('enrolledId', 'batchName batchNumber');
+    res.status(200).json({ success: true, count: interviews.length, data: interviews });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// UPDATE INTERVIEW BY ID
+exports.updateInterviewById = async (req, res) => {
+  try {
+    const { companyName, role, experience, location } = req.body;
+    const interview = await Interview.findByIdAndUpdate(
+      req.params.id,
+      { companyName, role, experience, location },
+      { new: true }
+    );
+    if (!interview) {
+      return res.status(404).json({ success: false, message: 'Interview not found' });
+    }
+    res.status(200).json({ success: true, message: 'Interview updated', data: interview });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// DELETE INTERVIEW BY ID
+exports.deleteInterviewById = async (req, res) => {
+  try {
+    const interview = await Interview.findById(req.params.id);
+    if (!interview) {
+      return res.status(404).json({ success: false, message: 'Interview not found' });
+    }
+
+    // Remove interview ref from user
+    const user = await User.findById(interview.user);
+    if (user) {
+      user.interviews.pull(interview._id);
+      await user.save();
+    }
+
+    await interview.deleteOne();
+    res.status(200).json({ success: true, message: 'Interview deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

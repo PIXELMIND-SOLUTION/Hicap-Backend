@@ -14,6 +14,10 @@ const details =require('./routes/detailsRoute');
 const interviewRoutes = require("./routes/interviewRoute");
 const courseModuleRoutes = require('./routes/courseModuleRoutes');
 const HomeScreenRoute =require('./routes/homeScreenRoutes')
+const calendarRoutes = require("./routes/calendarRoutes");
+
+
+
 
 const path = require("path");
 dotenv.config();
@@ -52,6 +56,8 @@ app.use('/api',details);
 app.use("/api", interviewRoutes);
 app.use("/api", courseModuleRoutes);
 app.use('/api',HomeScreenRoute);
+app.use("/api", calendarRoutes);
+
 
 
 
